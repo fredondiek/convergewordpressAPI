@@ -23,6 +23,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import dk.i2m.converge.core.content.NewsItemPlacement;
 import dk.i2m.converge.core.workflow.Edition;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -31,6 +32,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -140,13 +142,17 @@ public class WordPresslServicesClient {
         this.connectionTimeout = connectionTimeout;
     }
 
+    public XmlRpcClient getXmlRpcClient() {
+        XmlRpcClient client = new XmlRpcClient();
+        return client;
+    }
+
     public boolean login() throws WordPressServerConnectionException {
         try {
             URIBuilder builder = new URIBuilder(this.hostname + "/" + this.endpoint + "/xmlrpc.php");
             List<NameValuePair> values = new ArrayList<NameValuePair>();
             values.add(new BasicNameValuePair("username", this.username));
             values.add(new BasicNameValuePair("password", this.password));
-
             HttpPost method = new HttpPost(builder.build());
             method.setEntity(new UrlEncodedFormEntity(values, Consts.UTF_8));
             method.setHeader("Accept", "application/json");
@@ -197,7 +203,7 @@ public class WordPresslServicesClient {
     /**
      * Determine if a given resource exists.
      *
-     * @param resource Name of the resource as defined in the Drupal Services
+     * @param resource Name of the resource as defined in the Wordpress Services
      * module
      * @param id Unique identifier of the {@code resource}
      * @return {@code true} if the {@code resource} with the given {@code id}
@@ -226,18 +232,15 @@ public class WordPresslServicesClient {
         }
     }
 
-    
-
-   
-
-    public String postEdition(Object[] itemsPostParams,XmlRpcClient client){
-        String result ="";
-        
+    public String createNewPost(Object[] itemsPostParams) {
+        String result = "";
+        XmlRpcClient wordpRpcClient = null;
         try {
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-            config.setServerURL(new URL(this.hostname + "/" + this.endpoint + "/xmlrpc.php")); 
-            client.setConfig(config);
-            result= (String) client.execute("metaWeblog.newPost", itemsPostParams);
+            config.setServerURL(new URL(this.hostname + "/" + this.endpoint + "/xmlrpc.php"));
+            wordpRpcClient = getXmlRpcClient();
+            wordpRpcClient.setConfig(config);
+            result = (String) wordpRpcClient.execute("metaWeblog.newPost", itemsPostParams);
         } catch (MalformedURLException ex) {
             Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (XmlRpcException ex) {
@@ -245,7 +248,8 @@ public class WordPresslServicesClient {
         }
         return result;
     }
-    public String retrieveNode(Long id) throws URISyntaxException, IOException {
+
+    public String retrieveExistingPost(Long id) throws URISyntaxException, IOException {
         URIBuilder builder = new URIBuilder(this.hostname + "/" + this.endpoint + "/node/" + id);
         HttpGet method = new HttpGet(builder.build());
 
@@ -255,7 +259,7 @@ public class WordPresslServicesClient {
         return output;
     }
 
-    public String updateNode(Long id, UrlEncodedFormEntity entity) throws URISyntaxException, IOException {
+    public String updateExistingPost(Long id, UrlEncodedFormEntity entity) throws URISyntaxException, IOException {
         HttpPut method = createHttpPut(this.hostname + "/" + this.endpoint + "/node/" + id);
         method.setEntity(entity);
 
@@ -264,7 +268,7 @@ public class WordPresslServicesClient {
         return response;
     }
 
-    public boolean delete(String resource, Long id) throws URISyntaxException, IOException {
+    public boolean deleteExistingPost(String resource, Long id) throws URISyntaxException, IOException {
         URIBuilder builder = new URIBuilder(this.hostname + "/" + this.endpoint + "/" + resource + "/" + id);
         LOG.log(Level.FINE, "Deleting: {0}", builder.build());
         HttpDelete method = new HttpDelete(builder.build());
@@ -275,7 +279,6 @@ public class WordPresslServicesClient {
         IOUtils.copy(response.getEntity().getContent(), writer);
         System.out.println(writer.toString());
         EntityUtils.consume(response.getEntity());
-
         if (status == 200) {
             return true;
         } else {
@@ -293,35 +296,79 @@ public class WordPresslServicesClient {
      * @throws DrupalServerConnectionException If an unexpected result is
      * returned from the Drupal service
      */
-    public String attachFile(Long id, String fieldName, List<FileInfo> files) throws WordPressServerConnectionException {
+    
+    public String attachFileToPost(FileInfo fileInfo) throws WordPressServerConnectionException {
+        XmlRpcClient worRpcClientclient = null;
+        String result = "";
         try {
-            Tika tika = new Tika();
+            worRpcClientclient = getXmlRpcClient();
+            XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+            config.setServerURL(new URL(this.hostname + "/" + this.endpoint + "/xmlrpc.php"));
+            worRpcClientclient.setConfig(config);
 
-            MultipartEntity entity = new MultipartEntity();
-            int i = 0;
-            for (FileInfo file : files) {
-                String title = file.getCaption();
-                String mediaType = tika.detect(file.getFile());
-                entity.addPart("files[" + i + "]", new FileBody(file.getFile(), mediaType));
-                entity.addPart("field_values[" + i + "][title]", new StringBody(title));
-                entity.addPart("field_values[" + i + "][alt]", new StringBody(title));
-                i++;
-            }
-            entity.addPart("field_name", new StringBody(fieldName));
-            entity.addPart("attach", new StringBody("0"));
+            byte[] bytes = new byte[(int) fileInfo.getFile().length()];
+            FileInputStream fin = new FileInputStream(fileInfo.getFile());
+            fin.read(bytes);
+            fin.close();
 
-            HttpPost method = createHttpPost(this.hostname + "/" + this.endpoint + "/node/" + id + "/attach_file");
-            method.setEntity(entity);
+            Map<Object, Object> fileData = new HashMap<Object, Object>();
+            fileData.put("name", fileInfo.getFile().getName());
+            fileData.put("type", fileInfo.getFile().getName().substring(fileInfo.getFile().getName().lastIndexOf(".")));
+            fileData.put("bits", bytes);
+            fileData.put("overwrite", Boolean.TRUE);
+            Object[] params = new Object[]{new Integer(0), username, password, fileData};
+            Object uploadResult = worRpcClientclient.execute("metaWeblog.newMediaObject", params);
+            result = uploadResult.toString();
 
-            ResponseHandler<String> handler = new BasicResponseHandler();
-            String response = getHttpClient().execute(method, handler);
-            LOG.log(Level.FINER, "Attach file response: {0}", response);
-            return response;
+            LOG.log(Level.FINER, "Attach file response: {0}", uploadResult.toString());
+            return result;
+        } catch (XmlRpcException ex) {
+            Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
             throw new WordPressServerConnectionException("Could not attach files.", ex);
-        } catch (URISyntaxException ex) {
-            throw new WordPressServerConnectionException("Could not attach files. Invalud URI. ", ex);
         }
+        return result;
+    }
+
+    public String attachFile(Long id, String fieldName, List<FileInfo> files) throws WordPressServerConnectionException {
+        String result = "";
+        try {
+            Tika tika = new Tika();
+            MultipartEntity entity = new MultipartEntity();
+            int i = 0;
+            XmlRpcClient worRpcClientclient = null;
+            for (FileInfo file : files) {
+                i++;
+                worRpcClientclient = getXmlRpcClient();
+                XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+                config.setServerURL(new URL(this.hostname + "/" + this.endpoint + "/xmlrpc.php"));
+                worRpcClientclient.setConfig(config);
+                worRpcClientclient = getXmlRpcClient();
+                config.setServerURL(new URL(this.hostname + "/" + this.endpoint + "/xmlrpc.php"));
+                worRpcClientclient.setConfig(config);
+                byte[] bytes = new byte[(int) file.getFile().length()];
+                FileInputStream fin = new FileInputStream(file.getFile());
+                fin.read(bytes);
+                fin.close();
+
+                Map<Object, Object> fileData = new HashMap<Object, Object>();
+                fileData.put("name", file.getFile().getName());
+                fileData.put("type", file.getFile().getName().substring(file.getFile().getName().lastIndexOf(".")));
+                fileData.put("bits", bytes);
+                fileData.put("overwrite", Boolean.TRUE);
+                Object[] params = new Object[]{new Integer(0), username, password, fileData};
+                Object uploadResult = worRpcClientclient.execute("metaWeblog.newMediaObject", params);
+                result = uploadResult.toString();
+            }
+
+            LOG.log(Level.FINER, "Attach file response: {0}", result);
+            return result;
+        } catch (XmlRpcException ex) {
+            Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            throw new WordPressServerConnectionException("Could not attach files.", ex);
+        }
+        return result;
     }
 
     /**
@@ -333,12 +380,9 @@ public class WordPresslServicesClient {
      * @throws DrupalServerConnectionException If an unexpected result is
      * returned from the Drupal service
      */
-    public String removeFiles(Long id, String fieldName) throws WordPressServerConnectionException {
-        return attachFile(id, fieldName, new ArrayList<FileInfo>());
-    }
-
-   
-
+//    public String removeFilesFromPost(Long id, String fieldName) throws WordPressServerConnectionException {
+//        return attachFileToPost(id, fieldName, new ArrayList<FileInfo>());
+//    }
     /**
      * Gets the ID of the session with the Drupal instance.
      *
@@ -446,9 +490,6 @@ public class WordPresslServicesClient {
         getHttpClient().getConnectionManager().shutdown();
         super.finalize();
     }
-    
-    
-    
 //     private UrlEncodedFormEntity toUrlEncodedFormEntity(NewsItemPlacement nip, String publishOn) {
 //        Edition edition = nip.getEdition();
 //        List<NameValuePair> params = new ArrayList<NameValuePair>();
@@ -485,4 +526,3 @@ public class WordPresslServicesClient {
 //        return new UrlEncodedFormEntity(params, Charset.defaultCharset());
 //    }
 }
-

@@ -59,8 +59,10 @@ public class WordPressEditionAction implements EditionAction {
     private String connectionTimeout;
     private String socketTimeout;
     private int errors = 0;
-   private WordPresslServicesClient wordPressServiceClient;
+    private WordPresslServicesClient wordPressServiceClient;
+
     private enum Property {
+
         CONNECTION_TIMEOUT,
         IMAGE_RENDITION,
         NODE_LANGUAGE,
@@ -83,8 +85,7 @@ public class WordPressEditionAction implements EditionAction {
         SOCKET_TIMEOUT,
         URL,
         USERNAME,
-        TAG,    
-        
+        TAG
     }
     private static final Logger LOG = Logger.getLogger(WordPressEditionAction.class.getName());
     private static final String UPLOADING = "UPLOADING";
@@ -112,12 +113,8 @@ public class WordPressEditionAction implements EditionAction {
     private String category;
     private String custom_field;
     private int ignored_ping;
-    private String tag;  
-    
-    
-    
-    
-    
+    private String tag;
+
     private void init(OutletEditionAction action) {
         Map<String, String> properties = action.getPropertiesAsMap();
 
@@ -131,24 +128,24 @@ public class WordPressEditionAction implements EditionAction {
                 mapBuilder.append(actionProperty.getValue());
             }
         }
-        
-    mappings = mapBuilder.toString();
-    nodeType = properties.get(Property.NODE_TYPE.name());
-    nodeLanguage = properties.get(Property.NODE_LANGUAGE.name());
-    publishDelay = properties.get(Property.PUBLISH_DELAY.name());
-    publishImmediately = properties.get(Property.PUBLISH_IMMEDIATELY.name());
-    renditionName = properties.get(Property.IMAGE_RENDITION.name());
-    publishImmediately = properties.get(Property.PUBLISH_IMMEDIATELY.name());       
-    published=properties.get(Property.PUBLISHED.name());    
-    postId=properties.get(Property.POSTID.name());
-    post_status=properties.get(Property.POST_STATUS.name());
-    blog_id =properties.get(Property.BLOG_ID.name());
-    category = properties.get(Property.CATEGORIES.name());
-    custom_field= properties.get(Property.CUSTOME_FIELDS.name());
-    tag=properties.get(Property.TAG.name());    
-    sectionMapping = new HashMap<Long, Long>();
-        
-        
+
+        mappings = mapBuilder.toString();
+        nodeType = properties.get(Property.NODE_TYPE.name());
+        nodeLanguage = properties.get(Property.NODE_LANGUAGE.name());
+        publishDelay = properties.get(Property.PUBLISH_DELAY.name());
+        publishImmediately = properties.get(Property.PUBLISH_IMMEDIATELY.name());
+        renditionName = properties.get(Property.IMAGE_RENDITION.name());
+        publishImmediately = properties.get(Property.PUBLISH_IMMEDIATELY.name());
+        published = properties.get(Property.PUBLISHED.name());
+        postId = properties.get(Property.POSTID.name());
+        post_status = properties.get(Property.POST_STATUS.name());
+        blog_id = properties.get(Property.BLOG_ID.name());
+        category = properties.get(Property.CATEGORIES.name());
+        custom_field = properties.get(Property.CUSTOME_FIELDS.name());
+        tag = properties.get(Property.TAG.name());
+        sectionMapping = new HashMap<Long, Long>();
+
+
 
         this.hostname = properties.get(Property.URL.name());
         this.endpoint = properties.get(Property.SERVICE_ENDPOINT.name());
@@ -194,8 +191,8 @@ public class WordPressEditionAction implements EditionAction {
         } else if (!isInteger(socketTimeout)) {
             throw new IllegalArgumentException("'socketTimeout' must be an integer");
         }
-        
-                this.wordPressServiceClient = new WordPresslServicesClient(hostname, endpoint, username, password, Integer.valueOf(socketTimeout), Integer.valueOf(connectionTimeout));
+
+        this.wordPressServiceClient = new WordPresslServicesClient(hostname, endpoint, username, password, Integer.valueOf(socketTimeout), Integer.valueOf(connectionTimeout));
 
     }
 
@@ -206,18 +203,18 @@ public class WordPressEditionAction implements EditionAction {
         this.errors = 0;
         WordPresslServicesClient wordPresslServicesClient = new WordPresslServicesClient();
         Map<String, String> post = null;
-        XmlRpcClient client  = new XmlRpcClient();
+        XmlRpcClient client = new XmlRpcClient();
         XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
         String result = "";
 
         try {
             //config.setServerURL(new URL("http://localhost:8282/wordpress/xmlrpc.php"));
-            config.setServerURL(new URL("http://www.classic105.com/xmlrpc.php"));            
+            config.setServerURL(new URL("http://www.classic105.com/xmlrpc.php"));
             client.setConfig(config);
             LOG.log(Level.INFO, "Number of items in Edition #{0}: {1}", new Object[]{edition.getId(), edition.getNumberOfPlacements()});
 
             for (NewsItemPlacement nip : edition.getPlacements()) {
-            // processPlacement(ctx, nip);
+                processPlacement(ctx, nip);
                 post = new HashMap<String, String>();
                 post.put("mt_keywords", nip.getNewsItem().getTitle());
                 post.put("categories", "cat1,cat2");
@@ -232,11 +229,11 @@ public class WordPressEditionAction implements EditionAction {
                 post.put("description", "This is the content of a trivial post.");
                 //Object[] params = new Object[]{"1", "Converge", "@converge14!", post, Boolean.TRUE};
                 Object[] params = new Object[]{"1", "admin", "root", post, Boolean.TRUE};
-                result = wordPresslServicesClient.postEdition(params, client);
+                result = wordPresslServicesClient.createNewPost(params);
 
             }
             //0724667601==tomas okaris                                 //
-            
+
 
         } catch (MalformedURLException ex) {
             Logger.getLogger(WordPressEditionAction.class.getName()).log(Level.SEVERE, null, ex);
@@ -251,141 +248,144 @@ public class WordPressEditionAction implements EditionAction {
         LOG.log(Level.INFO, "Executing WordPressEditionAction for NewsItem #{0} in Edition #{1}", new Object[]{placement.getNewsItem().getId(), edition.getId()});
         init(action);
         this.errors = 0;
-        //processPlacement(ctx, placement);
+        processPlacement(ctx, placement);
         LOG.log(Level.WARNING, "{0} errors encounted", new Object[]{this.errors});
-        LOG.log(Level.INFO, "Finishing action. Edition #{0}", new Object[]{edition.getId()});        
+        LOG.log(Level.INFO, "Finishing action. Edition #{0}", new Object[]{edition.getId()});
         LOG.log(Level.INFO, "Executing WordPressEditionAction on Edition #{0}", edition.getId());
         this.errors = 0;
-        //WordPresslServicesClient wordPresslServicesClient = new WordPresslServicesClient();
         Map<String, String> post = null;
-        XmlRpcClient client  = new XmlRpcClient();
-        XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl(); 
-        String result="";
-          
+        XmlRpcClient client = new XmlRpcClient();
+        XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+        String result = "";
+
         //
         Edition editionItem = placement.getEdition();
         NewsItem newsItem = placement.getNewsItem();
 //        if (!newsItem.isEndState()) {
 //            return;
 //        }
-            
-            LOG.log(Level.INFO, "Number of items in Edition #{0}: {1}", new Object[]{edition.getId(), edition.getNumberOfPlacements()});         
-                // processPlacement(ctx, nip);
-                post = new HashMap<String, String>();
-                post.put("mt_keywords", "hhhhhhhhhhhhhhhhhhhhhh");
-                post.put("categories", "cat1,Cat2");
-                post.put("post_content", "This is the trivial test Content");
-                post.put("post_excerpt", "Test Excerpt");
-                post.put("post_status", "publish");
-                post.put("post_date", new Date().toString());
-                post.put("comment_status", "open");
-                post.put("ping_status", "open");
-                post.put("title", "NEW BLOG , Blog! CONVERGE CONVERGE");
-                post.put("link", "http://www.converge.org/");
-                post.put("description", "This is the content of a trivial post.");
-                
-                Object[] params = new Object[]{"1", "admin", "root", post, Boolean.TRUE};
-                result = wordPressServiceClient.postEdition(params, client);
-                
-                
+
+        LOG.log(Level.INFO, "Number of items in Edition #{0}: {1}", new Object[]{edition.getId(), edition.getNumberOfPlacements()});
+         processPlacement(ctx, placement);
+         
+         
+//         post = new HashMap<String, String>();
+//        post.put("mt_keywords", "hhhhhhhhhhhhhhhhhhhhhh");
+//        post.put("categories", "cat1,Cat2");
+//        post.put("post_content", newsItem.getStory());
+//        post.put("post_excerpt", "Test Excerpt");
+//        post.put("post_status", "publish");
+//        post.put("post_date", new Date().toString());
+//        post.put("comment_status", "open");
+//        post.put("ping_status", "open");
+//        post.put("title", "NEW BLOG , Blog! CONVERGE CONVERGE");
+//        post.put("link", "http://www.converge.org/");
+//        post.put("description", "This is the content of a trivial post.");
+         
+         
+        post = new HashMap<String, String>();
+        post.put("mt_keywords", "hhhhhhhhhhhhhhhhhhhhhh");
+        post.put("categories", "cat1,Cat2");
+        post.put("post_content", newsItem.getStory());
+        post.put("post_excerpt", newsItem.getBrief());
+        post.put("post_status", "publish");
+        post.put("post_date", new Date().toString());
+        post.put("comment_status", "open");
+        post.put("ping_status", "open");
+        post.put("title", newsItem.getTitle());
+        post.put("link", "http://www.dst.org/");
+        post.put("description", newsItem.getSlugline());
+
+        Object[] params = new Object[]{"1", "admin", "root", post, Boolean.TRUE};
+        result = wordPressServiceClient.createNewPost(params);
+
+
 //            ctx.updateNewsItemEditionState(status);
 //            ctx.updateNewsItemEditionState(nid);
 //            ctx.updateNewsItemEditionState(uri);
 //            ctx.updateNewsItemEditionState(submitted);
-                
-       
+
+
     }
-    
-    
-    
-    
-    
-//    /**
-//     * Process a single {@link NewsItemPlacement}. The processing includes
-//     * creating or updating a corresponding node in Drupal.
-//     *
-//     * @param ctx {@link PluginContext}
-//     * @param nip {@link NewsItemPlacement} to process
-//     */
-//    private void processPlacement(PluginContext ctx, NewsItemPlacement nip) {
-//
-//        Edition edition = nip.getEdition();
-//
-//        NewsItem newsItem = nip.getNewsItem();
-//
-//        // Ignore NewsItem if it hasn't reached the end state of the workflow
-//        if (!newsItem.isEndState()) {
+
+    /**
+     * Process a single {@link NewsItemPlacement}. The processing includes
+     * creating or updating a corresponding node in Drupal.
+     *
+     * @param ctx {@link PluginContext}
+     * @param nip {@link NewsItemPlacement} to process
+     */
+    private void processPlacement(PluginContext ctx, NewsItemPlacement nip) {
+
+        Edition edition = nip.getEdition();
+        NewsItem newsItem = nip.getNewsItem();
+
+        // Ignore NewsItem if it hasn't reached the end state of the workflow
+//        if (!newsItem.isEndState()) {   //Uncomment Me after tests
 //            return;
 //        }
-//
-//        // Ignore NewsItem if the section of the NewsItemPlacement is not mapped
-////        try {
-////            getSection(nip);
-////        } catch (UnmappedSectionException usex) {
-////            return;
-////        }
-//
-//        boolean update = false;
-////        try {
-////            // determine if the news item is already uploaded
-////            update = this.drupalServiceClient.exists("newsitem", nip.getNewsItem().getId());
-////        } catch (DrupalServerConnectionException ex) {
-////            LOG.log(Level.SEVERE, "Could not determine if NewsItem #{0} is already update. {1}", new Object[]{newsItem.getId(), ex.getMessage()});
-////            LOG.log(Level.FINEST, null, ex);
-////            errors++;
-////            return;
-////        }
-//
-//        //UrlEncodedFormEntity entity = toUrlEncodedFormEntity(nip, getPublishOn(edition));
-//        List<FileInfo> mediaItems = getMediaItems(newsItem);
-//
-//        if (update) {
-//            try {
-//                //Long nodeId = wordPressServiceClient.retrieveNodeIdFromResource("newsitem", nip.getNewsItem().getId());
-//                //LOG.log(Level.INFO, "Updating Node #{0} with NewsItem #{1} & {2} image(s)", new Object[]{nodeId, newsItem.getId(), mediaItems.size()});
-//               // wordPressServiceClient.updateNode(nodeId, entity);
-//                //wordPressServiceClient.attachFile(nodeId, "field_image", mediaItems);
-//            } catch (Exception ex) {
-//                this.errors++;
-//                LOG.log(Level.SEVERE, ex.getMessage());
-//                LOG.log(Level.FINEST, "", ex);
-//            }
-//        } else {
-//            LOG.log(Level.INFO, "Creating new Node for NewsItem #{0} & {1} image(s)", new Object[]{newsItem.getId(), mediaItems.size()});
-//
-//            NewsItemEditionState status = ctx.addNewsItemEditionState(edition.getId(), newsItem.getId(), STATUS_LABEL, UPLOADING.toString());
-//            NewsItemEditionState nid = ctx.addNewsItemEditionState(edition.getId(), newsItem.getId(), NID_LABEL, null);
-//            NewsItemEditionState uri = ctx.addNewsItemEditionState(edition.getId(), newsItem.getId(), URI_LABEL, null);
-//            NewsItemEditionState submitted = ctx.addNewsItemEditionState(edition.getId(), newsItem.getId(), DATE, null);
-//
-//            try {
-////                NodeInfo newNode = drupalServiceClient.createNode(entity);
-////                wordPressServiceClient.attachFile(newNode.getId(), "field_image", mediaItems);
-//
-//                nid.setValue(newNode.getId().toString());
-//                uri.setValue(newNode.getUri().toString());
-//                submitted.setValue(new Date().toString());
-//                status.setValue(UPLOADED.toString());
-//            } catch (WordPressServerConnectionException ex) {
-//                this.errors++;
-//                status.setValue(FAILED.toString());
-//                LOG.log(Level.SEVERE, ex.getMessage());
-//                LOG.log(Level.FINEST, "", ex);
-//
-//                ctx.updateNewsItemEditionState(status);
-//                ctx.updateNewsItemEditionState(nid);
-//                ctx.updateNewsItemEditionState(uri);
-//                ctx.updateNewsItemEditionState(submitted);
-//            }
-//
-//            ctx.updateNewsItemEditionState(status);
-//            ctx.updateNewsItemEditionState(nid);
-//            ctx.updateNewsItemEditionState(uri);
-//            ctx.updateNewsItemEditionState(submitted);
-//        }
-//    }
 
-    
+        // Ignore NewsItem if the section of the NewsItemPlacement is not mapped
+//        try {   //Uncomment Me after tests
+//            getSection(nip);
+//        } catch (UnmappedSectionException usex) {
+//            return;
+//        }
+
+        boolean update = false;  //Uncomment Me after tests
+//        try {
+//            // determine if the news item is already uploaded    //Uncomment Me after tests
+//            update = this.drupalServiceClient.exists("newsitem", nip.getNewsItem().getId());
+//        } catch (WordPressServerConnectionException ex) {
+//            LOG.log(Level.SEVERE, "Could not determine if NewsItem #{0} is already update. {1}", new Object[]{newsItem.getId(), ex.getMessage()});
+//            LOG.log(Level.FINEST, null, ex);
+//            errors++;
+//            return;
+//        }
+
+        //UrlEncodedFormEntity entity = toUrlEncodedFormEntity(nip, getPublishOn(edition));
+        List<FileInfo> mediaItems = getMediaItems(newsItem);
+
+        if (update) {
+            try {
+                //Long nodeId = wordPressServiceClient.retrieveNodeIdFromResource("newsitem", nip.getNewsItem().getId());
+                //LOG.log(Level.INFO, "Updating Node #{0} with NewsItem #{1} & {2} image(s)", new Object[]{nodeId, newsItem.getId(), mediaItems.size()});
+               // wordPressServiceClient.updateNode(nodeId, entity);
+                wordPressServiceClient.attachFile(Long.parseLong("1"), "field_image", mediaItems);
+            } catch (Exception ex) {
+                this.errors++;
+                LOG.log(Level.SEVERE, ex.getMessage());
+                LOG.log(Level.FINEST, "", ex);
+            }
+        } else {
+            LOG.log(Level.INFO, "Creating new Node for NewsItem #{0} & {1} image(s)", new Object[]{newsItem.getId(), mediaItems.size()});
+
+            NewsItemEditionState status = ctx.addNewsItemEditionState(edition.getId(), newsItem.getId(), STATUS_LABEL, UPLOADING.toString());
+            NewsItemEditionState nid = ctx.addNewsItemEditionState(edition.getId(), newsItem.getId(), NID_LABEL, null);
+            NewsItemEditionState uri = ctx.addNewsItemEditionState(edition.getId(), newsItem.getId(), URI_LABEL, null);
+            NewsItemEditionState submitted = ctx.addNewsItemEditionState(edition.getId(), newsItem.getId(), DATE, null);
+
+            try {
+                wordPressServiceClient.attachFile(Long.parseLong("1"), "field_image", mediaItems);
+      
+            } catch (WordPressServerConnectionException ex) {
+                this.errors++;
+                status.setValue(FAILED.toString());
+                LOG.log(Level.SEVERE, ex.getMessage());
+                LOG.log(Level.FINEST, "", ex);
+
+                ctx.updateNewsItemEditionState(status);
+                ctx.updateNewsItemEditionState(nid);
+                ctx.updateNewsItemEditionState(uri);
+                ctx.updateNewsItemEditionState(submitted);
+            }
+
+            ctx.updateNewsItemEditionState(status);
+            ctx.updateNewsItemEditionState(nid);
+            ctx.updateNewsItemEditionState(uri);
+            ctx.updateNewsItemEditionState(submitted);
+        }
+    }
     private List<FileInfo> getMediaItems(NewsItem newsItem) {
         List<FileInfo> mediaItems = new ArrayList<FileInfo>();
 
@@ -410,6 +410,7 @@ public class WordPressEditionAction implements EditionAction {
 
         return mediaItems;
     }
+
     @Override
     public boolean isSupportEditionExecute() {
         return true;
