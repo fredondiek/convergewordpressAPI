@@ -203,14 +203,12 @@ public class WordPressEditionAction implements EditionAction {
         this.errors = 0;
         WordPresslServicesClient wordPresslServicesClient = new WordPresslServicesClient();
         Map<String, String> post = null;
-        XmlRpcClient client = new XmlRpcClient();
-        XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-        String result = "";
+        XmlRpcClient client = wordPresslServicesClient.getXmlRpcClient();
+        String result ="";
 
-        try {
+       
             //config.setServerURL(new URL("http://localhost:8282/wordpress/xmlrpc.php"));
-            config.setServerURL(new URL("http://www.classic105.com/xmlrpc.php"));
-            client.setConfig(config);
+        
             LOG.log(Level.INFO, "Number of items in Edition #{0}: {1}", new Object[]{edition.getId(), edition.getNumberOfPlacements()});
 
             for (NewsItemPlacement nip : edition.getPlacements()) {
@@ -231,13 +229,10 @@ public class WordPressEditionAction implements EditionAction {
                 Object[] params = new Object[]{"1", "admin", "root", post, Boolean.TRUE};
                 result = wordPresslServicesClient.createNewPost(params);
 
-            }
-            //0724667601==tomas okaris                                 //
+                                      
 
 
-        } catch (MalformedURLException ex) {
-            Logger.getLogger(WordPressEditionAction.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        } 
 
         LOG.log(Level.WARNING, "{0} errors encounted", new Object[]{this.errors});
         LOG.log(Level.INFO, "Finishing action. Edition #{0}", new Object[]{edition.getId()});
