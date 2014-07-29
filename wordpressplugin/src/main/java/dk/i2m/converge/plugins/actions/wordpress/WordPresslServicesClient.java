@@ -190,7 +190,7 @@ public class WordPresslServicesClient {
 
     public void logout() throws WordPressServerConnectionException {
         try {
-            HttpPost method = createHttpPost(this.hostname + "/" + this.endpoint + "/user/logout");
+            HttpPost method = createHttpPost(this.hostname + "/" + this.endpoint + "/xmlrpc.php");
             ResponseHandler<String> handler = new BasicResponseHandler();
             getHttpClient().execute(method, handler);
         } catch (IOException ex) {
@@ -211,7 +211,7 @@ public class WordPresslServicesClient {
      */
     public boolean exists(String resource, Long id) throws WordPressServerConnectionException {
         try {
-            HttpGet method = createHttpGet(this.hostname + "/" + this.endpoint + "/" + resource + "/" + id);
+            HttpGet method = createHttpGet(this.hostname + "/" + this.endpoint + "/xmlrpc.php");
 
             HttpResponse response = getHttpClient().execute(method);
             int status = response.getStatusLine().getStatusCode();
@@ -238,6 +238,8 @@ public class WordPresslServicesClient {
         try {
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
             config.setServerURL(new URL(this.hostname + "/" + this.endpoint + "/xmlrpc.php"));
+            config.setEnabledForExtensions(true);
+            config.setEnabledForExceptions(true);
             wordpRpcClient = getXmlRpcClient();
             wordpRpcClient.setConfig(config);
             result = (String) wordpRpcClient.execute("metaWeblog.newPost", itemsPostParams);
@@ -250,7 +252,7 @@ public class WordPresslServicesClient {
     }
 
     public String retrieveExistingPost(Long id) throws URISyntaxException, IOException {
-        URIBuilder builder = new URIBuilder(this.hostname + "/" + this.endpoint + "/node/" + id);
+        URIBuilder builder = new URIBuilder(this.hostname + "/" + this.endpoint + "/xmlrpc.php");
         HttpGet method = new HttpGet(builder.build());
 
         ResponseHandler<String> handler = new BasicResponseHandler();
@@ -260,7 +262,7 @@ public class WordPresslServicesClient {
     }
 
     public String updateExistingPost(Long id, UrlEncodedFormEntity entity) throws URISyntaxException, IOException {
-        HttpPut method = createHttpPut(this.hostname + "/" + this.endpoint + "/node/" + id);
+        HttpPut method = createHttpPut(this.hostname + "/" + this.endpoint + "/xmlrpc.php");
         method.setEntity(entity);
 
         ResponseHandler<String> handler = new BasicResponseHandler();
@@ -269,7 +271,7 @@ public class WordPresslServicesClient {
     }
 
     public boolean deleteExistingPost(String resource, Long id) throws URISyntaxException, IOException {
-        URIBuilder builder = new URIBuilder(this.hostname + "/" + this.endpoint + "/" + resource + "/" + id);
+        URIBuilder builder = new URIBuilder(this.hostname + "/" + this.endpoint + "/xmlrpc.php");
         LOG.log(Level.FINE, "Deleting: {0}", builder.build());
         HttpDelete method = new HttpDelete(builder.build());
 
@@ -296,7 +298,6 @@ public class WordPresslServicesClient {
      * @throws DrupalServerConnectionException If an unexpected result is
      * returned from the Drupal service
      */
-    
     public String attachFileToPost(FileInfo fileInfo) throws WordPressServerConnectionException {
         XmlRpcClient worRpcClientclient = null;
         String result = "";
@@ -304,6 +305,8 @@ public class WordPresslServicesClient {
             worRpcClientclient = getXmlRpcClient();
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
             config.setServerURL(new URL(this.hostname + "/" + this.endpoint + "/xmlrpc.php"));
+            config.setEnabledForExtensions(true);
+            config.setEnabledForExceptions(true);
             worRpcClientclient.setConfig(config);
 
             byte[] bytes = new byte[(int) fileInfo.getFile().length()];
@@ -317,7 +320,7 @@ public class WordPresslServicesClient {
             fileData.put("bits", bytes);
             fileData.put("overwrite", Boolean.TRUE);
             Object[] params = new Object[]{new Integer(0), username, password, fileData};
-            Object uploadResult = worRpcClientclient.execute("metaWeblog.newMediaObject", params);
+            Object uploadResult = worRpcClientclient.execute("metaWeblog.uploadFile", params);//newMediaObject
             result = uploadResult.toString();
 
             LOG.log(Level.FINER, "Attach file response: {0}", uploadResult.toString());
@@ -333,8 +336,6 @@ public class WordPresslServicesClient {
     public String attachFile(Long id, String fieldName, List<FileInfo> files) throws WordPressServerConnectionException {
         String result = "";
         try {
-            Tika tika = new Tika();
-            MultipartEntity entity = new MultipartEntity();
             int i = 0;
             XmlRpcClient worRpcClientclient = null;
             for (FileInfo file : files) {
@@ -344,7 +345,6 @@ public class WordPresslServicesClient {
                 config.setServerURL(new URL(this.hostname + "/" + this.endpoint + "/xmlrpc.php"));
                 worRpcClientclient.setConfig(config);
                 worRpcClientclient = getXmlRpcClient();
-                config.setServerURL(new URL(this.hostname + "/" + this.endpoint + "/xmlrpc.php"));
                 worRpcClientclient.setConfig(config);
                 byte[] bytes = new byte[(int) file.getFile().length()];
                 FileInputStream fin = new FileInputStream(file.getFile());
@@ -357,7 +357,7 @@ public class WordPresslServicesClient {
                 fileData.put("bits", bytes);
                 fileData.put("overwrite", Boolean.TRUE);
                 Object[] params = new Object[]{new Integer(0), username, password, fileData};
-                Object uploadResult = worRpcClientclient.execute("metaWeblog.newMediaObject", params);
+                Object uploadResult = worRpcClientclient.execute("metaWeblog.uploadFile", params);
                 result = uploadResult.toString();
             }
 
@@ -378,15 +378,15 @@ public class WordPresslServicesClient {
      * @param fieldName Name of the field used for storing files
      * @return Response from removing all the files
      * @throws DrupalServerConnectionException If an unexpected result is
-     * returned from the Drupal service
+     * returned from the WordPress service
      */
 //    public String removeFilesFromPost(Long id, String fieldName) throws WordPressServerConnectionException {
 //        return attachFileToPost(id, fieldName, new ArrayList<FileInfo>());
 //    }
     /**
-     * Gets the ID of the session with the Drupal instance.
+     * Gets the ID of the session with the WordPress instance.
      *
-     * @return ID of the session with the specified Drupal instance. If no
+     * @return ID of the session with the specified WordPress instance. If no
      * session has been initiated {@code null} is returned.
      */
     public String getSessionId() {
@@ -394,9 +394,9 @@ public class WordPresslServicesClient {
     }
 
     /**
-     * Gets the name of the session with the Drupal instance.
+     * Gets the name of the session with the WordPress instance.
      *
-     * @return Name of the session with the specified Drupal instance. If no
+     * @return Name of the session with the specified WordPress instance. If no
      * session has been initiated {@code null} is returned.
      */
     public String getSessionName() {
@@ -404,8 +404,8 @@ public class WordPresslServicesClient {
     }
 
     /**
-     * Gets the session cookie for authenticated communication with the Drupal
-     * instance after login.
+     * Gets the session cookie for authenticated communication with the
+     * WordPress instance after login.
      *
      * @return Cookie to use to identify the authenticate session initiated upon
      * logging in
@@ -438,8 +438,8 @@ public class WordPresslServicesClient {
     /**
      * Gets the CSRF Session Token and store it in {@link #csrfToken}.
      *
-     * @throws DrupalServerConnectionException If an invalid response was
-     * received from the Drupal service
+     * @throws WordPress If an invalid response was received from the WordPress
+     * service
      */
     private void obtainSessionToken() throws WordPressServerConnectionException {
         try {
