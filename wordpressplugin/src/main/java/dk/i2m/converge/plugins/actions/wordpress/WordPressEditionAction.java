@@ -165,7 +165,7 @@ SITE_URL,
         }
 
 //        this.wordPressServiceClient = new WordPresslServicesClient(hostname, endpoint, username, password, Integer.valueOf(socketTimeout), Integer.valueOf(connectionTimeout));
-        this.wordPressServiceClient = new WordPresslServicesClient(website, username, password, Integer.valueOf(socketTimeout), Integer.valueOf(connectionTimeout));
+        this.wordPressServiceClient = new WordPresslServicesClient(website, username, password);
 
     }
 
