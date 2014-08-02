@@ -32,11 +32,6 @@ import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 
 public class WordPresslServicesClient {
 
-    /**
-     * Header for setting the Cross-script request forgery token.
-     *
-     * @since 1.1.11
-     */
     private static final Logger LOG = Logger.getLogger(WordPresslServicesClient.class.getName());
     private String hostname;
     private String endpoint;
@@ -47,14 +42,14 @@ public class WordPresslServicesClient {
     private String password;
 
     /**
-     * Creates a new instance of {@link DrupalServicesClient}.
+     * Creates a new instance of {@link WordPresslServicesClient}.
      */
     public WordPresslServicesClient() {
         this("", "", "", "");
     }
 
     /**
-     * Creates a new instance of {@link DrupalServicesClient}.
+     * Creates a new instance of {@link WordPresslServicesClient}.
      *
      * @param hostname Host name of the WordPress instance
      * @param endpoint Services endpoint to communicate with
@@ -108,13 +103,14 @@ public class WordPresslServicesClient {
             wordpRpcClient = getXmlRpcClient();
             wordpRpcClient.setConfig(config);
             result = (Object[]) wordpRpcClient.execute("metaWeblog.getRecentPosts", new Object[]{9999, this.username, this.password});
-            labelsearch:for(Object o : result) {
-                 Map m = (Map) o;
-                 String blogID = (String) m.get("blogid");
-                 String blogName = (String) m.get("blogName");
-                 String xmlRpcUrl = (String) m.get("xmlrpc");
-                System.out.println(blogID+" >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>......");
-                if (blogID.equalsIgnoreCase(blogId+"" )) {
+            labelsearch:
+            for (Object o : result) {
+                Map m = (Map) o;
+                String blogID = (String) m.get("blogid");
+                String blogName = (String) m.get("blogName");
+                String xmlRpcUrl = (String) m.get("xmlrpc");
+                System.out.println(blogID + " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>......");
+                if (blogID.equalsIgnoreCase(blogId + "")) {
                     exists = true;
                     break labelsearch;
                 }

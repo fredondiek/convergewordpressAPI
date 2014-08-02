@@ -4,15 +4,10 @@
  */
 package dk.i2m.converge.plugins.actions.wordpress;
 
-import com.google.gson.annotations.SerializedName;
-
 /**
  *
  * @author fred
  */
-
-
-
 public class PostInfo {
 
     private String apiKey;
@@ -20,14 +15,16 @@ public class PostInfo {
     private String password;
     private String blogId;
 
-    public PostInfo(){
+    public PostInfo() {
     }
-    public PostInfo(String userName,String password, String blogId) {
+
+    public PostInfo(String userName, String password, String blogId) {
         this.userName = userName;
         this.password = password;
         this.blogId = blogId;
     }
-    public PostInfo(String apiKey, String userName,  String password, String blogId) {
+
+    public PostInfo(String apiKey, String userName, String password, String blogId) {
         this.apiKey = apiKey;
         this.userName = userName;
         this.password = password;
@@ -49,8 +46,6 @@ public class PostInfo {
     public String getUserName() {
         return userName;
     }
-    
- 
 
     /**
      * @param apiKey the apiKey to set

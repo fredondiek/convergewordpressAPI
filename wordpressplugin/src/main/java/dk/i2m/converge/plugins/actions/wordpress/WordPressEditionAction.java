@@ -52,7 +52,8 @@ public class WordPressEditionAction implements EditionAction {
     private WordPresslServicesClient wordPressServiceClient;
 
     private enum Property {
-SITE_URL,
+
+        SITE_URL,
         CONNECTION_TIMEOUT,
         IMAGE_RENDITION,
         NODE_LANGUAGE,
