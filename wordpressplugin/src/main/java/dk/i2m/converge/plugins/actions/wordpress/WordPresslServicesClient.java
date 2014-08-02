@@ -21,9 +21,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,20 +66,20 @@ public class WordPresslServicesClient {
         this.username = username;
         this.password = password;
     }
-    
+
     public WordPresslServicesClient(String websiteUrl, String username, String password, Integer socketTimeout, Integer connectionTimeout) {
         this.websiteUrl = websiteUrl;
         this.username = username;
         this.password = password;
     }
-    
+
     public WordPresslServicesClient(String hostname, String endpoint, String username, String password) {
         this.hostname = hostname;
         this.endpoint = endpoint;
         this.username = username;
         this.password = password;
     }
-    
+
     public WordPresslServicesClient(String hostname, String endpoint, String username, String password, Integer socketTimeout, Integer connectionTimeout) {
         this.hostname = hostname;
         this.endpoint = endpoint;
@@ -91,19 +88,18 @@ public class WordPresslServicesClient {
         this.socketTimeout = socketTimeout;
         this.connectionTimeout = connectionTimeout;
     }
-    
+
     public XmlRpcClient getXmlRpcClient() {
         XmlRpcClient client = new XmlRpcClient();
         return client;
     }
-    
+
     public boolean exists(int blogId) throws WordPressServerConnectionException {
         Object[] result;
         XmlRpcClient wordpRpcClient;
         boolean exists = false;
         // Object[] obj = (Object[]) client.execute("wp.getUsersBlogs", params);
         try {
-//          URL wordpresssite = new URL(this.hostname + "/" + this.endpoint + "/xmlrpc.php");
             URL wordpresssite = new URL(this.websiteUrl + "/xmlrpc.php");
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
             config.setServerURL(wordpresssite);
@@ -111,14 +107,16 @@ public class WordPresslServicesClient {
             config.setEnabledForExceptions(true);
             wordpRpcClient = getXmlRpcClient();
             wordpRpcClient.setConfig(config);
-            result = (Object[]) wordpRpcClient.execute("metaWeblog.getRecentPosts", new Object[]{this.username, this.password, 9999});
-            for (final Object o : result) {
-                final Map m = (Map) o;
-                final String blogID = (String) m.get("blogid");
-                final String blogName = (String) m.get("blogName");
-                final String xmlRpcUrl = (String) m.get("xmlrpc");
-                if (Integer.parseInt(blogID) == blogId) {
+            result = (Object[]) wordpRpcClient.execute("metaWeblog.getRecentPosts", new Object[]{9999, this.username, this.password});
+            labelsearch:for(Object o : result) {
+                 Map m = (Map) o;
+                 String blogID = (String) m.get("blogid");
+                 String blogName = (String) m.get("blogName");
+                 String xmlRpcUrl = (String) m.get("xmlrpc");
+                System.out.println(blogID+" >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>......");
+                if (blogID.equalsIgnoreCase(blogId+"" )) {
                     exists = true;
+                    break labelsearch;
                 }
             }
         } catch (XmlRpcException ex) {
@@ -128,7 +126,7 @@ public class WordPresslServicesClient {
         }
         return exists;
     }
-    
+
     public String createNewPost(Object[] itemsPostParams) {
         String result = "";
         XmlRpcClient wordpRpcClient;
@@ -148,10 +146,10 @@ public class WordPresslServicesClient {
         }
         return result;
     }
-    
+
     public PostInfo retrieveExistingPost(int blogId) throws IOException {
         Object result;
-        HashMap<String,String> resultstr;
+        HashMap<String, String> resultstr;
 //        XmlRpcClient wordpRpcClient;
 //        boolean exists = false;
 //        PostInfo blog = null;
@@ -191,7 +189,7 @@ public class WordPresslServicesClient {
         PostInfo blog = null;
         try {
             XmlRpcClient wordpRpcClient;
-            
+
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
 //            config.setServerURL(new URL(this.hostname + "/" + this.endpoint + "/xmlrpc.php"));
             config.setServerURL(new URL(this.websiteUrl + "/xmlrpc.php"));
@@ -199,7 +197,7 @@ public class WordPresslServicesClient {
             config.setEnabledForExceptions(true);
             wordpRpcClient = getXmlRpcClient();
             wordpRpcClient.setConfig(config);
-            resultstr = (HashMap<String,String>) wordpRpcClient.execute("metaWeblog.getPost", new Object[]{blogId, "admin", "root"});
+            resultstr = (HashMap<String, String>) wordpRpcClient.execute("metaWeblog.getPost", new Object[]{blogId, "admin", "root"});
             if (resultstr != null) {
 //                final Map<String,String> m = (Map<String,String>) result;
 //                final String url = (String) m.get("url");
@@ -211,8 +209,8 @@ public class WordPresslServicesClient {
 //                final String title = (String) m.get("title");
 //                final String mt_keywords = (String) m.get("mt_keywords");
 //                final String xmlRpcUrl = (String) m.get("xmlrpc");
-                
-               // String[] arrValue = resultstr.split(",");
+
+                // String[] arrValue = resultstr.split(",");
                 Map<String, String> valueMap = new HashMap<String, String>();
 //                for (String string : arrValue) {
 //                    String[] mapPair = string.split("=");
@@ -247,12 +245,11 @@ public class WordPresslServicesClient {
         }
         return blog;
     }
-    
+
     public boolean updateExistingPost(int blogId, Object[] itemsPostParams) throws URISyntaxException, IOException {
         Object result;
         XmlRpcClient wordpRpcClient;
         boolean edited = false;
-        PostInfo blog = null;
         try {
             URL wordpresssite = new URL(this.websiteUrl + "/xmlrpc.php");
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
@@ -261,14 +258,12 @@ public class WordPresslServicesClient {
             config.setEnabledForExceptions(true);
             wordpRpcClient = getXmlRpcClient();
             wordpRpcClient.setConfig(config);
-//            result = wordpRpcClient.execute("metaWeblog.editPost", new Object[]{new String(this.username), new String(this.password), blogId});
-            result = wordpRpcClient.execute("metaWeblog.editPost", itemsPostParams);
-            
+            result = (Object) wordpRpcClient.execute("metaWeblog.editPost", new Object[]{itemsPostParams});
             if (result != null) {
                 //CHECK THE RETURNED STRING FURTHER LOGIC NEEDED HERE
                 edited = true;
             }
-            
+
         } catch (XmlRpcException ex) {
             Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (MalformedURLException ex) {
@@ -276,7 +271,7 @@ public class WordPresslServicesClient {
         }
         return edited;
     }
-    
+
     public boolean deleteExistingPost(int blogId) throws URISyntaxException, IOException {
         Object result;
         XmlRpcClient wordpRpcClient;
@@ -292,21 +287,21 @@ public class WordPresslServicesClient {
             wordpRpcClient.setConfig(config);
             //Object  result = (Object) client.execute("metaWeblog.deletePost", new Object[]{1,"32", "admin","root"});
 
-            result = wordpRpcClient.execute("metaWeblog.deletePost", new Object[]{1,blogId,this.username, this.password});
+            result = wordpRpcClient.execute("metaWeblog.deletePost", new Object[]{1, blogId, this.username, this.password});
             if (result != null) {
                 //CHECK THE RETURNED STRING FURTHER LOGIC NEEDED HERE
                 deleted = true;
             }
-            
+
         } catch (XmlRpcException ex) {
             Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (MalformedURLException ex) {
             Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         }
         return deleted;
-        
+
     }
-    
+
     public String attachFileToPost(FileInfo fileInfo, int blogId) throws WordPressServerConnectionException {
         XmlRpcClient worRpcClientclient;
         String result = "";
@@ -317,12 +312,12 @@ public class WordPresslServicesClient {
             config.setEnabledForExtensions(true);
             config.setEnabledForExceptions(true);
             worRpcClientclient.setConfig(config);
-            
+
             byte[] bytes = new byte[(int) fileInfo.getFile().length()];
             FileInputStream fin = new FileInputStream(fileInfo.getFile());
             fin.read(bytes);
             fin.close();
-            
+
             Map<Object, Object> fileData = new HashMap<Object, Object>();
             fileData.put("name", fileInfo.getFile().getName());
             fileData.put("type", fileInfo.getFile().getName().substring(fileInfo.getFile().getName().lastIndexOf(".") + 1));
@@ -331,7 +326,7 @@ public class WordPresslServicesClient {
             Object[] params = new Object[]{blogId, username, password, fileData};
             Object uploadResult = worRpcClientclient.execute("metaWeblog.uploadFile", params);//newMediaObject
             result = uploadResult.toString();
-            
+
             LOG.log(Level.FINER, "Attach file response: {0}", uploadResult.toString());
             return result;
         } catch (XmlRpcException ex) {
@@ -341,7 +336,7 @@ public class WordPresslServicesClient {
         }
         return result;
     }
-    
+
     public String attachFiles(int blogId, List<FileInfo> files) throws WordPressServerConnectionException {
         String result = "";
         try {
@@ -359,7 +354,7 @@ public class WordPresslServicesClient {
                 FileInputStream fin = new FileInputStream(file.getFile());
                 fin.read(bytes);
                 fin.close();
-                
+
                 Map<Object, Object> fileData = new HashMap<Object, Object>();
                 fileData.put("name", file.getFile().getName());
                 fileData.put("type", file.getFile().getName().substring(file.getFile().getName().lastIndexOf(".") + 1));
@@ -369,7 +364,7 @@ public class WordPresslServicesClient {
                 Object uploadResult = worRpcClientclient.execute("metaWeblog.uploadFile", params);
                 result = uploadResult.toString();
             }
-            
+
             LOG.log(Level.FINER, "Attach file response: {0}", result);
             return result;
         } catch (XmlRpcException ex) {
@@ -379,16 +374,16 @@ public class WordPresslServicesClient {
         }
         return result;
     }
-    
+
     public static enum PostType {
-        
+
         publish(true), draft(false);
         private final boolean value;
-        
+
         PostType(boolean value) {
             this.value = value;
         }
-        
+
         public boolean booleanValue() {
             return value;
         }
