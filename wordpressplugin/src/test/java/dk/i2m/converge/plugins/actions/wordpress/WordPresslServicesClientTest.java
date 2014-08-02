@@ -7,6 +7,7 @@ package dk.i2m.converge.plugins.actions.wordpress;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import junit.framework.TestCase;
 import org.apache.xmlrpc.client.XmlRpcClient;
 
@@ -51,16 +52,19 @@ public class WordPresslServicesClientTest extends TestCase {
     /**
      * Test of exists method, of class WordPresslServicesClient.
      */
-//    public void testExists() throws Exception {
-//        System.out.println("exists");
-//        int blogId = 0;
-//        WordPresslServicesClient instance = new WordPresslServicesClient();
-//        boolean expResult = false;
-//        boolean result = instance.exists(blogId);
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-//    }
+    public void testExists() throws Exception {
+        int blogId = 159;
+        String websiteURL = "http://localhost:8282/wordpress";
+        WordPresslServicesClient instance = new WordPresslServicesClient(websiteURL, "admin", "root");
+
+        boolean expResult = true;
+        //Act
+        boolean result = instance.exists(blogId);
+        //Assert
+
+        assertEquals(expResult, result);
+    }
+
     /**
      * Test of createNewPost method, of class WordPresslServicesClient.
      */
@@ -85,14 +89,8 @@ public class WordPresslServicesClientTest extends TestCase {
         String actualResult = instance.createNewPost(itemsPostParams);
 
         //Assert
-        String expResult = "48"; //This result changes increments by 2 for wordpress sites
+        String expResult = "161"; //This result changes increments by 2 for wordpress sites
         assertEquals(expResult, actualResult);
-        // TODO review the generated test code and remove the default call to fail.
-        //fail("The test case is a prototype.");
-
-
-
-
 
     }
 
@@ -100,8 +98,7 @@ public class WordPresslServicesClientTest extends TestCase {
      * Test of retrieveExistingPost method, of class WordPresslServicesClient.
      */
     public void testRetrieveExistingPost() throws Exception {
-        System.out.println("retrieveExistingPost");
-        int blogId = 62;
+        int blogId = 155;
         String websiteURL = "http://localhost:8282/wordpress";
         WordPresslServicesClient instance = new WordPresslServicesClient(websiteURL, "admin", "root");
 
@@ -110,39 +107,60 @@ public class WordPresslServicesClientTest extends TestCase {
 
         //Assert
         PostInfo expResult = new PostInfo("admin", "root", blogId + "");
-        assertEquals(expResult, result);
-        // fail("The test case is a prototype.");
+        assertEquals(expResult.getBlogId(), result.getBlogId());
 
 
     }
-//
-//    /**
-//     * Test of updateExistingPost method, of class WordPresslServicesClient.
-//     */
-//    public void testUpdateExistingPost() throws Exception {
-//        System.out.println("updateExistingPost");
-//        int blogId = 0;
-//        Object[] itemsPostParams = null;
-//        WordPresslServicesClient instance = new WordPresslServicesClient();
-//        boolean expResult = false;
-//        boolean result = instance.updateExistingPost(blogId, itemsPostParams);
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-//    }
+
+    /**
+     * Test of updateExistingPost method, of class WordPresslServicesClient.
+     */
+    public void testUpdateExistingPost() throws Exception {
+        int blogId = 155;
+        String websiteURL = "http://localhost:8282/wordpress";
+        WordPresslServicesClient instance = new WordPresslServicesClient(websiteURL, "admin", "root");
+        Map<String, String> post = new HashMap<String, String>();
+        String text = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.";
+
+        post.put("mt_keywords", "testkeyword");
+        post.put("categories", "testcat,Cat2");
+        post.put("post_content", text);
+        post.put("post_excerpt", "Test Excerpt");
+        post.put("post_status", "publish");
+        post.put("post_date", new Date().toString());
+        post.put("comment_status", "open");
+        post.put("ping_status", "open");
+        post.put("title", "Another Updated Title from Converge, From Converge");
+        post.put("link", "http://www.vonhagen.org/");
+        post.put("description", text);
+
+        Object[] itemsPostParams = new Object[]{157, "admin", "root", post};
+        boolean expResult = true;
+
+        //Act
+        boolean result = instance.updateExistingPost(blogId, itemsPostParams);
+
+        //Assert
+        assertEquals(expResult, result);
+
+    }
+
     /**
      * Test of deleteExistingPost method, of class WordPresslServicesClient.
      */
-//    public void testDeleteExistingPost() throws Exception {
-//        System.out.println("deleteExistingPost");
-//        int blogId = 0;
-//        WordPresslServicesClient instance = new WordPresslServicesClient();
-//        boolean expResult = false;
-//        boolean result = instance.deleteExistingPost(blogId);
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-//    }
+    public void testDeleteExistingPost() throws Exception {
+        int blogId = 34;
+        String websiteURL = "http://localhost:8282/wordpress";
+        WordPresslServicesClient instance = new WordPresslServicesClient(websiteURL, "admin", "root");
+        boolean expResult = true;
+
+        //Act
+        boolean result = instance.deleteExistingPost(blogId);
+
+        //Assert
+        assertEquals(expResult, result);
+
+    }
 //
 //    /**
 //     * Test of attachFileToPost method, of class WordPresslServicesClient.
