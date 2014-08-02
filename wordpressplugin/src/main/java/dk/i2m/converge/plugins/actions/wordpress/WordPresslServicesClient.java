@@ -38,11 +38,13 @@ public class WordPresslServicesClient {
      *
      * @since 1.1.11
      */
+    
     private static final Logger LOG = Logger.getLogger(WordPresslServicesClient.class.getName());
     private String hostname;
     private String endpoint;
     private Integer connectionTimeout = 30000;
     private Integer socketTimeout = 30000;
+    private String websiteUrl;    
     private String username;
     private String password;
 
@@ -61,6 +63,17 @@ public class WordPresslServicesClient {
      * @param username Username with privilege to access the endpoint
      * @param password Password matching the {@code username}
      */
+    public WordPresslServicesClient(String websiteUrl, String username, String password) {
+        this.websiteUrl = websiteUrl;
+        this.username = username;
+        this.password = password;
+    }
+
+    public WordPresslServicesClient(String websiteUrl, String username, String password,Integer socketTimeout, Integer connectionTimeout) {
+        this.websiteUrl = websiteUrl;
+        this.username = username;
+        this.password = password;
+    }
     public WordPresslServicesClient(String hostname, String endpoint, String username, String password) {
         this.hostname = hostname;
         this.endpoint = endpoint;
@@ -76,6 +89,7 @@ public class WordPresslServicesClient {
         this.socketTimeout = socketTimeout;
         this.connectionTimeout = connectionTimeout;
     }
+    
 
     public XmlRpcClient getXmlRpcClient() {
         XmlRpcClient client = new XmlRpcClient();
@@ -88,14 +102,15 @@ public class WordPresslServicesClient {
         boolean exists = false;
         // Object[] obj = (Object[]) client.execute("wp.getUsersBlogs", params);
         try {
-            URL wordpresssite = new URL(this.hostname + "/" + this.endpoint + "/xmlrpc.php");
+//          URL wordpresssite = new URL(this.hostname + "/" + this.endpoint + "/xmlrpc.php");
+            URL wordpresssite = new URL(this.websiteUrl+"/xmlrpc.php");
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
             config.setServerURL(wordpresssite);
             config.setEnabledForExtensions(true);
             config.setEnabledForExceptions(true);
             wordpRpcClient = getXmlRpcClient();
             wordpRpcClient.setConfig(config);
-            result = (Object[]) wordpRpcClient.execute("metaWeblog.getRecentPosts", new Object[]{this.username,this.password, 9999});
+            result = (Object[]) wordpRpcClient.execute("metaWeblog.getRecentPosts", new Object[]{this.username, this.password, 9999});
             for (final Object o : result) {
                 final Map m = (Map) o;
                 final String blogID = (String) m.get("blogid");
@@ -118,7 +133,8 @@ public class WordPresslServicesClient {
         XmlRpcClient wordpRpcClient;
         try {
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-            config.setServerURL(new URL(this.hostname + "/" + this.endpoint + "/xmlrpc.php"));
+//            config.setServerURL(new URL(this.hostname + "/" + this.endpoint + "/xmlrpc.php"));
+            config.setServerURL(new URL(this.websiteUrl+"/xmlrpc.php"));
             config.setEnabledForExtensions(true);
             config.setEnabledForExceptions(true);
             wordpRpcClient = getXmlRpcClient();
@@ -138,14 +154,16 @@ public class WordPresslServicesClient {
         boolean exists = false;
         PostInfo blog = null;
         try {
-            URL wordpresssite = new URL(this.hostname + "/" + this.endpoint + "/xmlrpc.php");
+//            URL wordpresssite = new URL(this.hostname + "/" + this.endpoint + "/xmlrpc.php");
+             
+            URL wordpresssite = new URL(this.websiteUrl+"/xmlrpc.php");
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
             config.setServerURL(wordpresssite);
             config.setEnabledForExtensions(true);
             config.setEnabledForExceptions(true);
             wordpRpcClient = getXmlRpcClient();
             wordpRpcClient.setConfig(config);
-            result = (Object[]) wordpRpcClient.execute("metaWeblog.getPost", new Object[]{this.username,this.password, blogId});
+            result = (Object[]) wordpRpcClient.execute("metaWeblog.getPost", new Object[]{this.username, this.password, blogId});
             if (result != null) {
                 for (final Object o : result) {
                     final Map m = (Map) o;
@@ -164,7 +182,7 @@ public class WordPresslServicesClient {
                     }
                 }
             }
-
+             
         } catch (XmlRpcException ex) {
             Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (MalformedURLException ex) {
@@ -173,13 +191,13 @@ public class WordPresslServicesClient {
         return blog;
     }
 
-    public boolean updateExistingPost(int blogId,Object[] itemsPostParams) throws URISyntaxException, IOException {
+    public boolean updateExistingPost(int blogId, Object[] itemsPostParams) throws URISyntaxException, IOException {
         Object result;
         XmlRpcClient wordpRpcClient;
         boolean edited = false;
         PostInfo blog = null;
         try {
-            URL wordpresssite = new URL(this.hostname + "/" + this.endpoint + "/xmlrpc.php");
+            URL wordpresssite = new URL(this.websiteUrl+"/xmlrpc.php");
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
             config.setServerURL(wordpresssite);
             config.setEnabledForExtensions(true);
@@ -208,7 +226,7 @@ public class WordPresslServicesClient {
         boolean deleted = false;
         PostInfo blog = null;
         try {
-            URL wordpresssite = new URL(this.hostname + "/" + this.endpoint + "/xmlrpc.php");
+            URL wordpresssite = new URL(this.websiteUrl+"/xmlrpc.php");
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
             config.setServerURL(wordpresssite);
             config.setEnabledForExtensions(true);
@@ -236,7 +254,7 @@ public class WordPresslServicesClient {
         try {
             worRpcClientclient = getXmlRpcClient();
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-            config.setServerURL(new URL(this.hostname + "/" + this.endpoint + "/xmlrpc.php"));
+            config.setServerURL(new URL(this.websiteUrl+"/xmlrpc.php"));
             config.setEnabledForExtensions(true);
             config.setEnabledForExceptions(true);
             worRpcClientclient.setConfig(config);
@@ -274,7 +292,7 @@ public class WordPresslServicesClient {
                 i++;
                 worRpcClientclient = getXmlRpcClient();
                 XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-                config.setServerURL(new URL(this.hostname + "/" + this.endpoint + "/xmlrpc.php"));
+                config.setServerURL(new URL(this.websiteUrl+"/xmlrpc.php"));
                 worRpcClientclient.setConfig(config);
                 worRpcClientclient = getXmlRpcClient();
                 worRpcClientclient.setConfig(config);
@@ -317,3 +335,4 @@ public class WordPresslServicesClient {
         }
     }
 }
+                                                                                

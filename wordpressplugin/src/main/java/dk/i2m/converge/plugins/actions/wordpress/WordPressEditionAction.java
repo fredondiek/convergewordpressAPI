@@ -41,6 +41,7 @@ import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 public class WordPressEditionAction implements EditionAction {
 
     public static final int MEDIA_ITEM_TITLE_LENGTH = 1024;
+    private String website;
     private String hostname;
     private String endpoint;
     private String username;
@@ -51,7 +52,7 @@ public class WordPressEditionAction implements EditionAction {
     private WordPresslServicesClient wordPressServiceClient;
 
     private enum Property {
-
+SITE_URL,
         CONNECTION_TIMEOUT,
         IMAGE_RENDITION,
         NODE_LANGUAGE,
@@ -128,6 +129,7 @@ public class WordPressEditionAction implements EditionAction {
         this.password = properties.get(Property.PASSWORD.name());
         this.connectionTimeout = properties.get(Property.CONNECTION_TIMEOUT.name());
         this.socketTimeout = properties.get(Property.SOCKET_TIMEOUT.name());
+        this.website = properties.get(Property.SITE_URL);
 
         if (hostname == null) {
             throw new IllegalArgumentException("'hostname' cannot be null");
@@ -162,7 +164,8 @@ public class WordPressEditionAction implements EditionAction {
             throw new IllegalArgumentException("'socketTimeout' must be an integer");
         }
 
-        this.wordPressServiceClient = new WordPresslServicesClient(hostname, endpoint, username, password, Integer.valueOf(socketTimeout), Integer.valueOf(connectionTimeout));
+//        this.wordPressServiceClient = new WordPresslServicesClient(hostname, endpoint, username, password, Integer.valueOf(socketTimeout), Integer.valueOf(connectionTimeout));
+        this.wordPressServiceClient = new WordPresslServicesClient(website, username, password, Integer.valueOf(socketTimeout), Integer.valueOf(connectionTimeout));
 
     }
 
