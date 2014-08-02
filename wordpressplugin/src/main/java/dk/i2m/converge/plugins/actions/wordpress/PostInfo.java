@@ -17,6 +17,12 @@ public class PostInfo {
     private String password;
     private String blogId;
 
+    
+    public PostInfo(String userName,String password, String blogId) {
+        this.userName = userName;
+        this.password = password;
+        this.blogId = blogId;
+    }
     public PostInfo(String apiKey, String userName,
             String password, String blogId) {
         this.apiKey = apiKey;
