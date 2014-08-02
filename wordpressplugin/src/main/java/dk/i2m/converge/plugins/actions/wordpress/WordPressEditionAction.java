@@ -17,12 +17,7 @@ import dk.i2m.converge.core.plugin.EditionAction;
 import dk.i2m.converge.core.plugin.PluginContext;
 import dk.i2m.converge.core.workflow.Edition;
 import dk.i2m.converge.core.workflow.OutletEditionAction;
-import dk.i2m.converge.core.workflow.OutletEditionActionProperty;
-import dk.i2m.converge.core.workflow.Section;
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -35,13 +30,7 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.xmlrpc.XmlRpcException;
-import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 
 /**
@@ -73,7 +62,6 @@ public class WordPressEditionAction implements EditionAction {
         PUBLISHED,
         POSTID,
         POST_STATUS,
-        SECTION_MAPPING,
         ALLOW_COMMENTS,
         BLOG_ID,
         POST_TYPE,
@@ -116,19 +104,9 @@ public class WordPressEditionAction implements EditionAction {
     private String tag;
 
     private void init(OutletEditionAction action) {
+
         Map<String, String> properties = action.getPropertiesAsMap();
-
-
         StringBuilder mapBuilder = new StringBuilder();
-        for (OutletEditionActionProperty actionProperty : action.getProperties()) {
-            if (actionProperty.getKey().equalsIgnoreCase(Property.SECTION_MAPPING.name())) {
-                if (mapBuilder.length() > 0) {
-                    mapBuilder.append(";");
-                }
-                mapBuilder.append(actionProperty.getValue());
-            }
-        }
-
         mappings = mapBuilder.toString();
         nodeType = properties.get(Property.NODE_TYPE.name());
         nodeLanguage = properties.get(Property.NODE_LANGUAGE.name());
@@ -144,9 +122,6 @@ public class WordPressEditionAction implements EditionAction {
         custom_field = properties.get(Property.CUSTOME_FIELDS.name());
         tag = properties.get(Property.TAG.name());
         sectionMapping = new HashMap<Long, Long>();
-
-
-
         this.hostname = properties.get(Property.URL.name());
         this.endpoint = properties.get(Property.SERVICE_ENDPOINT.name());
         this.username = properties.get(Property.USERNAME.name());
@@ -164,11 +139,6 @@ public class WordPressEditionAction implements EditionAction {
             throw new IllegalArgumentException("'password' cannot be null");
         }
 
-        if (nodeType == null) {
-            throw new IllegalArgumentException("'nodeType' cannot be null");
-        } else if (mappings == null) {
-            throw new IllegalArgumentException("'mappings' cannot be null");
-        }
 
         if (publishImmediately == null && publishDelay == null) {
             throw new IllegalArgumentException("'publishImmediately' or 'publishDelay' cannot be null");
@@ -201,38 +171,35 @@ public class WordPressEditionAction implements EditionAction {
         LOG.log(Level.INFO, "Executing WordPressEditionAction on Edition #{0}", edition.getId());
         init(action);
         this.errors = 0;
-        WordPresslServicesClient wordPresslServicesClient = new WordPresslServicesClient();
-        Map<String, String> post = null;
-        XmlRpcClient client = wordPresslServicesClient.getXmlRpcClient();
-        String result ="";
+        Map<String, String> post;
+        String result = "";
 
-       
-            //config.setServerURL(new URL("http://localhost:8282/wordpress/xmlrpc.php"));
-        
-            LOG.log(Level.INFO, "Number of items in Edition #{0}: {1}", new Object[]{edition.getId(), edition.getNumberOfPlacements()});
+        LOG.log(Level.INFO, "Number of items in Edition #{0}: {1}", new Object[]{edition.getId(), edition.getNumberOfPlacements()});
 
-            for (NewsItemPlacement nip : edition.getPlacements()) {
-                processPlacement(ctx, nip);
-                post = new HashMap<String, String>();
-                post.put("mt_keywords", nip.getNewsItem().getTitle());
-                post.put("categories", "cat1,cat2");
-                post.put("post_content", "This is the trivial test Content");
-                post.put("post_excerpt", "Test Excerpt");
-                post.put("post_status", "publish");
-                post.put("post_date", new Date().toString());
-                post.put("comment_status", "open");
-                post.put("ping_status", "open");
-                post.put("title", "NEW BLOG , Blog! CONVERGE CONVERGE");
-                post.put("link", "http://www.converge.org/");
-                post.put("description", "This is the content of a trivial post.");
-                //Object[] params = new Object[]{"1", "Converge", "@converge14!", post, Boolean.TRUE};
-                Object[] params = new Object[]{"1", "admin", "root", post, Boolean.TRUE};
-                result = wordPresslServicesClient.createNewPost(params);
+        for (NewsItemPlacement nip : edition.getPlacements()) {
+            processPlacement(ctx, nip);
+            post = new HashMap<String, String>();
+            post.put("mt_keywords", nip.getNewsItem().getTitle());
+            post.put("categories", "cat1,cat2");
+            post.put("post_content", "This is the trivial test Content");
+            post.put("post_excerpt", "Test Excerpt");
+            post.put("post_status", "publish");
+            post.put("post_date", new Date().toString());
+            post.put("comment_status", "open");
+            post.put("ping_status", "open");
+            post.put("title", "NEW BLOG , Blog! CONVERGE CONVERGE");
+            post.put("link", "http://www.converge.org/");
+            post.put("description", "This is the content of a trivial post.");
+            //Object[] params = new Object[]{"1", "Converge", "@converge14!", post, Boolean.TRUE};
+            Object[] params = new Object[]{blog_id, "admin", "root", post, Boolean.TRUE};
+            result = wordPressServiceClient.createNewPost(params);
 
-                                      
+            //CHECK IF NEWS ITEM HAS IMAGES ETC
 
 
-        } 
+
+
+        }
 
         LOG.log(Level.WARNING, "{0} errors encounted", new Object[]{this.errors});
         LOG.log(Level.INFO, "Finishing action. Edition #{0}", new Object[]{edition.getId()});
@@ -248,12 +215,8 @@ public class WordPressEditionAction implements EditionAction {
         LOG.log(Level.INFO, "Finishing action. Edition #{0}", new Object[]{edition.getId()});
         LOG.log(Level.INFO, "Executing WordPressEditionAction on Edition #{0}", edition.getId());
         this.errors = 0;
-        Map<String, String> post = null;
-        XmlRpcClient client = new XmlRpcClient();
-        XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+        Map<String, String> post;
         String result = "";
-
-        //
         Edition editionItem = placement.getEdition();
         NewsItem newsItem = placement.getNewsItem();
 //        if (!newsItem.isEndState()) {
@@ -261,23 +224,8 @@ public class WordPressEditionAction implements EditionAction {
 //        }
 
         LOG.log(Level.INFO, "Number of items in Edition #{0}: {1}", new Object[]{edition.getId(), edition.getNumberOfPlacements()});
-         processPlacement(ctx, placement);
-         
-         
-//         post = new HashMap<String, String>();
-//        post.put("mt_keywords", "hhhhhhhhhhhhhhhhhhhhhh");
-//        post.put("categories", "cat1,Cat2");
-//        post.put("post_content", newsItem.getStory());
-//        post.put("post_excerpt", "Test Excerpt");
-//        post.put("post_status", "publish");
-//        post.put("post_date", new Date().toString());
-//        post.put("comment_status", "open");
-//        post.put("ping_status", "open");
-//        post.put("title", "NEW BLOG , Blog! CONVERGE CONVERGE");
-//        post.put("link", "http://www.converge.org/");
-//        post.put("description", "This is the content of a trivial post.");
-         
-         
+
+        //LOCAL TEST
         post = new HashMap<String, String>();
         post.put("mt_keywords", "hhhhhhhhhhhhhhhhhhhhhh");
         post.put("categories", "cat1,Cat2");
@@ -291,9 +239,10 @@ public class WordPressEditionAction implements EditionAction {
         post.put("link", "http://www.dst.org/");
         post.put("description", newsItem.getSlugline());
 
+        //Check if this has been Published already
         Object[] params = new Object[]{"1", "admin", "root", post, Boolean.TRUE};
-        result = wordPressServiceClient.createNewPost(params);
-
+        // result = wordPressServiceClient.createNewPost(params);
+        processPlacement(ctx, placement);
 
 //            ctx.updateNewsItemEditionState(status);
 //            ctx.updateNewsItemEditionState(nid);
@@ -311,42 +260,50 @@ public class WordPressEditionAction implements EditionAction {
      * @param nip {@link NewsItemPlacement} to process
      */
     private void processPlacement(PluginContext ctx, NewsItemPlacement nip) {
-
+        HashMap post;
         Edition edition = nip.getEdition();
         NewsItem newsItem = nip.getNewsItem();
-
         // Ignore NewsItem if it hasn't reached the end state of the workflow
-//        if (!newsItem.isEndState()) {   //Uncomment Me after tests
-//            return;
-//        }
+        if (!newsItem.isEndState()) {   //Uncomment Me after tests
+            return;
+        }
+        boolean update = false;
+        try {
+            // determine if the news item is already uploaded    //Uncomment Me after tests
+            if (this.wordPressServiceClient.exists(Integer.parseInt(blog_id)) == true) {
+                update = this.wordPressServiceClient.exists(Integer.parseInt(blog_id));
+            }
+            // update = this.wordPressServiceClient.exists(Integer.parseInt(blog_id));
 
-        // Ignore NewsItem if the section of the NewsItemPlacement is not mapped
-//        try {   //Uncomment Me after tests
-//            getSection(nip);
-//        } catch (UnmappedSectionException usex) {
-//            return;
-//        }
-
-        boolean update = false;  //Uncomment Me after tests
-//        try {
-//            // determine if the news item is already uploaded    //Uncomment Me after tests
-//            update = this.drupalServiceClient.exists("newsitem", nip.getNewsItem().getId());
-//        } catch (WordPressServerConnectionException ex) {
-//            LOG.log(Level.SEVERE, "Could not determine if NewsItem #{0} is already update. {1}", new Object[]{newsItem.getId(), ex.getMessage()});
-//            LOG.log(Level.FINEST, null, ex);
-//            errors++;
-//            return;
-//        }
-
-        //UrlEncodedFormEntity entity = toUrlEncodedFormEntity(nip, getPublishOn(edition));
+        } catch (WordPressServerConnectionException ex) {
+            LOG.log(Level.SEVERE, "Could not determine if NewsItem #{0} is already update. {1}", new Object[]{newsItem.getId(), ex.getMessage()});
+            LOG.log(Level.FINEST, null, ex);
+            errors++;
+            return;
+        }
         List<FileInfo> mediaItems = getMediaItems(newsItem);
 
         if (update) {
             try {
-                //Long nodeId = wordPressServiceClient.retrieveNodeIdFromResource("newsitem", nip.getNewsItem().getId());
-                //LOG.log(Level.INFO, "Updating Node #{0} with NewsItem #{1} & {2} image(s)", new Object[]{nodeId, newsItem.getId(), mediaItems.size()});
-               // wordPressServiceClient.updateNode(nodeId, entity);
-                wordPressServiceClient.attachFile(Long.parseLong("1"), "field_image", mediaItems);
+
+                post = new HashMap<String, String>(); //Replace all Below with Converge ones
+                post.put("mt_keywords", "hhhhhhhhhhhhhhhhhhhhhh");
+                post.put("categories", "cat1,Cat2");
+                post.put("post_content", newsItem.getStory());
+                post.put("post_excerpt", newsItem.getBrief());
+                post.put("post_status", "publish");
+                post.put("post_date", new Date().toString());
+                post.put("comment_status", "open");
+                post.put("ping_status", "open");
+                post.put("title", newsItem.getTitle());
+                post.put("link", "http://www.dst.org/");
+                post.put("description", newsItem.getSlugline());
+                Object[] params = new Object[]{"admin", "root", post, Boolean.TRUE};
+                wordPressServiceClient.updateExistingPost(Integer.parseInt(blog_id), params);
+                if (mediaItems.size() > 0) {
+                    wordPressServiceClient.attachFiles(Integer.parseInt(blog_id), mediaItems);
+                }
+
             } catch (Exception ex) {
                 this.errors++;
                 LOG.log(Level.SEVERE, ex.getMessage());
@@ -354,15 +311,30 @@ public class WordPressEditionAction implements EditionAction {
             }
         } else {
             LOG.log(Level.INFO, "Creating new Node for NewsItem #{0} & {1} image(s)", new Object[]{newsItem.getId(), mediaItems.size()});
-
             NewsItemEditionState status = ctx.addNewsItemEditionState(edition.getId(), newsItem.getId(), STATUS_LABEL, UPLOADING.toString());
             NewsItemEditionState nid = ctx.addNewsItemEditionState(edition.getId(), newsItem.getId(), NID_LABEL, null);
             NewsItemEditionState uri = ctx.addNewsItemEditionState(edition.getId(), newsItem.getId(), URI_LABEL, null);
             NewsItemEditionState submitted = ctx.addNewsItemEditionState(edition.getId(), newsItem.getId(), DATE, null);
 
             try {
-                wordPressServiceClient.attachFile(Long.parseLong("1"), "field_image", mediaItems);
-      
+                post = new HashMap<String, String>(); //Replace all Below with Converge ones
+                post.put("mt_keywords", "hhhhhhhhhhhhhhhhhhhhhh");
+                post.put("categories", "cat1,Cat2");
+                post.put("post_content", newsItem.getStory());
+                post.put("post_excerpt", newsItem.getBrief());
+                post.put("post_status", "publish");
+                post.put("post_date", new Date().toString());
+                post.put("comment_status", "open");
+                post.put("ping_status", "open");
+                post.put("title", newsItem.getTitle());
+                post.put("link", "http://www.dst.org/");
+                post.put("description", newsItem.getSlugline());
+                Object[] params = new Object[]{blog_id, "admin", "root", post, Boolean.TRUE};
+                this.wordPressServiceClient.createNewPost(params);
+                if (mediaItems.size() > 0) {
+                    wordPressServiceClient.attachFiles(Integer.parseInt(blog_id), mediaItems);
+                }
+
             } catch (WordPressServerConnectionException ex) {
                 this.errors++;
                 status.setValue(FAILED.toString());
@@ -381,6 +353,7 @@ public class WordPressEditionAction implements EditionAction {
             ctx.updateNewsItemEditionState(submitted);
         }
     }
+
     private List<FileInfo> getMediaItems(NewsItem newsItem) {
         List<FileInfo> mediaItems = new ArrayList<FileInfo>();
 

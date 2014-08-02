@@ -11,35 +11,33 @@ import com.google.gson.annotations.SerializedName;
  * @author fred
  */
 public class PostInfo {
-    
-    @SerializedName("pid")
-    private Long id;
-    @SerializedName("uri")
-    private String uri;
 
-    public PostInfo() {
-        this(0L, "");
+    private String apiKey;
+    private String userName;
+    private String password;
+    private String blogId;
+
+    public PostInfo(String apiKey, String userName,
+            String password, String blogId) {
+        this.apiKey = apiKey;
+        this.userName = userName;
+        this.password = password;
+        this.blogId = blogId;
     }
 
-    public PostInfo(Long id, String uri) {
-        this.id = id;
-        this.uri = uri;
+    public String getApiKey() {
+        return apiKey;
     }
 
-    public Long getId() {
-        return id;
+    public String getBlogId() {
+        return blogId;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public String getPassword() {
+        return password;
     }
 
-    public String getUri() {
-        return uri;
+    public String getUserName() {
+        return userName;
     }
-
-    public void setUri(String uri) {
-        this.uri = uri;
-    }
-    
 }
