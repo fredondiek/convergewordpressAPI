@@ -10,6 +10,9 @@ import com.google.gson.annotations.SerializedName;
  *
  * @author fred
  */
+
+
+
 public class PostInfo {
 
     private String apiKey;
@@ -17,14 +20,14 @@ public class PostInfo {
     private String password;
     private String blogId;
 
-    
+    public PostInfo(){
+    }
     public PostInfo(String userName,String password, String blogId) {
         this.userName = userName;
         this.password = password;
         this.blogId = blogId;
     }
-    public PostInfo(String apiKey, String userName,
-            String password, String blogId) {
+    public PostInfo(String apiKey, String userName,  String password, String blogId) {
         this.apiKey = apiKey;
         this.userName = userName;
         this.password = password;
@@ -45,5 +48,35 @@ public class PostInfo {
 
     public String getUserName() {
         return userName;
+    }
+    
+ 
+
+    /**
+     * @param apiKey the apiKey to set
+     */
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
+    }
+
+    /**
+     * @param userName the userName to set
+     */
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    /**
+     * @param password the password to set
+     */
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    /**
+     * @param blogId the blogId to set
+     */
+    public void setBlogId(String blogId) {
+        this.blogId = blogId;
     }
 }
