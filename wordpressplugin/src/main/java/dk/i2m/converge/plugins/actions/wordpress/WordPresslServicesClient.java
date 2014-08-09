@@ -40,6 +40,7 @@ public class WordPresslServicesClient {
     private String websiteUrl;
     private String username;
     private String password;
+    private Integer replyTimeOut=60000;
 
     /**
      * Creates a new instance of {@link WordPresslServicesClient}.
@@ -61,6 +62,13 @@ public class WordPresslServicesClient {
         this.username = username;
         this.password = password;
     }
+    
+    public WordPresslServicesClient(String websiteUrl, String username, String password,String connectionTimeout) {
+        this.websiteUrl = websiteUrl;
+        this.username = username;
+        this.password = password;
+        this.connectionTimeout=Integer.parseInt(connectionTimeout);
+    }
 
     public WordPresslServicesClient(String websiteUrl, String username, String password, Integer socketTimeout, Integer connectionTimeout) {
         this.websiteUrl = websiteUrl;
@@ -68,12 +76,8 @@ public class WordPresslServicesClient {
         this.password = password;
     }
 
-    public WordPresslServicesClient(String hostname, String endpoint, String username, String password) {
-        this.hostname = hostname;
-        this.endpoint = endpoint;
-        this.username = username;
-        this.password = password;
-    }
+   
+    
 
     public WordPresslServicesClient(String hostname, String endpoint, String username, String password, Integer socketTimeout, Integer connectionTimeout) {
         this.hostname = hostname;
@@ -100,8 +104,11 @@ public class WordPresslServicesClient {
             config.setServerURL(wordpresssite);
             config.setEnabledForExtensions(true);
             config.setEnabledForExceptions(true);
+            config.setConnectionTimeout(connectionTimeout);
+            config.setConnectionTimeout(this.replyTimeOut);
             wordpRpcClient = getXmlRpcClient();
             wordpRpcClient.setConfig(config);
+            
             result = (Object[]) wordpRpcClient.execute("metaWeblog.getRecentPosts", new Object[]{9999, this.username, this.password});
             labelsearch:
             for (Object o : result) {
@@ -132,6 +139,8 @@ public class WordPresslServicesClient {
             config.setServerURL(new URL(this.websiteUrl + "/xmlrpc.php"));
             config.setEnabledForExtensions(true);
             config.setEnabledForExceptions(true);
+            config.setConnectionTimeout(connectionTimeout);
+            config.setConnectionTimeout(this.replyTimeOut);
             wordpRpcClient = getXmlRpcClient();
             wordpRpcClient.setConfig(config);
             result = (String) wordpRpcClient.execute("metaWeblog.newPost", itemsPostParams);
@@ -191,6 +200,8 @@ public class WordPresslServicesClient {
             config.setServerURL(new URL(this.websiteUrl + "/xmlrpc.php"));
             config.setEnabledForExtensions(true);
             config.setEnabledForExceptions(true);
+            config.setConnectionTimeout(connectionTimeout);
+            config.setConnectionTimeout(this.replyTimeOut);
             wordpRpcClient = getXmlRpcClient();
             wordpRpcClient.setConfig(config);
             resultstr = (HashMap<String, String>) wordpRpcClient.execute("metaWeblog.getPost", new Object[]{blogId, "admin", "root"});
@@ -252,6 +263,8 @@ public class WordPresslServicesClient {
             config.setServerURL(wordpresssite);
             config.setEnabledForExtensions(true);
             config.setEnabledForExceptions(true);
+            config.setConnectionTimeout(connectionTimeout);
+            config.setConnectionTimeout(this.replyTimeOut);
             wordpRpcClient = getXmlRpcClient();
             wordpRpcClient.setConfig(config);
             result = (Object) wordpRpcClient.execute("metaWeblog.editPost", new Object[]{itemsPostParams});
@@ -279,6 +292,8 @@ public class WordPresslServicesClient {
             config.setServerURL(wordpresssite);
             config.setEnabledForExtensions(true);
             config.setEnabledForExceptions(true);
+            config.setConnectionTimeout(connectionTimeout);
+            config.setConnectionTimeout(this.replyTimeOut);
             wordpRpcClient = getXmlRpcClient();
             wordpRpcClient.setConfig(config);
             //Object  result = (Object) client.execute("metaWeblog.deletePost", new Object[]{1,"32", "admin","root"});
@@ -307,6 +322,8 @@ public class WordPresslServicesClient {
             config.setServerURL(new URL(this.websiteUrl + "/xmlrpc.php"));
             config.setEnabledForExtensions(true);
             config.setEnabledForExceptions(true);
+            config.setConnectionTimeout(connectionTimeout);
+            config.setConnectionTimeout(this.replyTimeOut);
             worRpcClientclient.setConfig(config);
 
             byte[] bytes = new byte[(int) fileInfo.getFile().length()];
@@ -319,9 +336,9 @@ public class WordPresslServicesClient {
             fileData.put("type", fileInfo.getFile().getName().substring(fileInfo.getFile().getName().lastIndexOf(".") + 1));
             fileData.put("bits", bytes);
             fileData.put("overwrite", Boolean.FALSE);
-            Object[] params = new Object[]{blogId, username, password, fileData};
-            Object uploadResult = worRpcClientclient.execute("metaWeblog.uploadFile", params);//newMediaObject
-            result = uploadResult.toString();
+            Object[] params = new Object[]{blogId, username, password, fileData};//wp.uploadFile
+            Object uploadResult = worRpcClientclient.execute("wp.uploadFile", params);//newMediaObject
+            result = uploadResult.toString();//metaWeblog.uploadFile
 
             LOG.log(Level.FINER, "Attach file response: {0}", uploadResult.toString());
             return result;
@@ -343,6 +360,8 @@ public class WordPresslServicesClient {
                 worRpcClientclient = getXmlRpcClient();
                 XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
                 config.setServerURL(new URL(this.websiteUrl + "/xmlrpc.php"));
+                config.setConnectionTimeout(connectionTimeout);
+                config.setConnectionTimeout(this.replyTimeOut);
                 worRpcClientclient.setConfig(config);
                 worRpcClientclient = getXmlRpcClient();
                 worRpcClientclient.setConfig(config);
@@ -356,9 +375,9 @@ public class WordPresslServicesClient {
                 fileData.put("type", file.getFile().getName().substring(file.getFile().getName().lastIndexOf(".") + 1));
                 fileData.put("bits", bytes);
                 fileData.put("overwrite", Boolean.TRUE);
-                Object[] params = new Object[]{blogId, username, password, fileData};
-                Object uploadResult = worRpcClientclient.execute("metaWeblog.uploadFile", params);
-                result = uploadResult.toString();
+                Object[] params = new Object[]{blogId, username, password, fileData};//wp.uploadFile
+                Object uploadResult = worRpcClientclient.execute("wp.uploadFile", params);
+                result = uploadResult.toString();//metaWeblog.uploadFile
             }
 
             LOG.log(Level.FINER, "Attach file response: {0}", result);
