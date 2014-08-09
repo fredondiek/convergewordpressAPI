@@ -4,12 +4,16 @@
  */
 package dk.i2m.converge.plugins.actions.wordpress;
 
+import java.io.File;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import junit.framework.TestCase;
 import org.apache.xmlrpc.client.XmlRpcClient;
+import org.apache.commons.io.FileUtils;
 
 /**
  *
@@ -161,34 +165,55 @@ public class WordPresslServicesClientTest extends TestCase {
         assertEquals(expResult, result);
 
     }
-//
-//    /**
-//     * Test of attachFileToPost method, of class WordPresslServicesClient.
-//     */
-//    public void testAttachFileToPost() throws Exception {
-//        System.out.println("attachFileToPost");
-//        FileInfo fileInfo = null;
-//        int blogId = 0;
-//        WordPresslServicesClient instance = new WordPresslServicesClient();
-//        String expResult = "";
-//        String result = instance.attachFileToPost(fileInfo, blogId);
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-//    }
-//
-//    /**
-//     * Test of attachFiles method, of class WordPresslServicesClient.
-//     */
-//    public void testAttachFiles() throws Exception {
-//        System.out.println("attachFiles");
-//        int blogId = 0;
-//        List<FileInfo> files = null;
-//        WordPresslServicesClient instance = new WordPresslServicesClient();
-//        String expResult = "";
-//        String result = instance.attachFiles(blogId, files);
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-//    }
+
+    /**
+     * Test of attachFileToPost method, of class WordPresslServicesClient.
+     */
+    public void testAttachFileToPost() throws Exception {
+        System.out.println("attachFileToPost");
+
+        File file = new File("C://java_code//3.png");
+        if (!file.exists()) {
+            file.createNewFile();
+        };
+        System.out.println(file);
+        FileInfo fileInfo = new FileInfo(file, "png");
+        // List<FileInfo> fileInfoList = new ArrayList<FileInfo>();
+        int blogId = 179;
+        String websiteURL = "http://localhost:8282/wordpress";
+        WordPresslServicesClient instance = new WordPresslServicesClient(websiteURL, "admin", "root");
+        String expResult = "";
+
+
+        //Act
+        String result = instance.attachFileToPost(fileInfo, blogId);
+        //Assert
+        assertEquals(expResult, result);
+
+    }
+
+    /**
+     * Test of attachFiles method, of class WordPresslServicesClient.
+     */
+    public void testAttachFiles() throws Exception {
+        System.out.println("attachFiles");
+        int blogId = 179;
+        List<FileInfo> files = new ArrayList<FileInfo>();
+        File file = new File("C://java_code//3.png");
+        if (!file.exists()) {
+            file.createNewFile();
+        }
+        System.out.println(file.getName());
+        FileInfo fileInfo = new FileInfo(file, "png");
+        files.add(fileInfo);
+        String websiteURL = "http://localhost:8282/wordpress";
+        WordPresslServicesClient instance = new WordPresslServicesClient(websiteURL, "admin", "root");
+
+        String expResult = "";
+        //Act
+        String result = instance.attachFiles(blogId, files);
+
+        //Assert
+        assertEquals(expResult, result);
+    }
 }
