@@ -51,7 +51,6 @@ public class WordPressEditionAction implements EditionAction {
     private WordPresslServicesClient wordPressServiceClient;
 
     private enum Property {
-
         SITE_URL,
         CONNECTION_TIMEOUT,
         IMAGE_RENDITION,
@@ -216,7 +215,6 @@ public class WordPressEditionAction implements EditionAction {
 
         if (update) { //tessting to not considering the update to fix l
             try {
-
                 post = new HashMap<String, String>(); //Replace all Below with Converge ones
                 post.put("mt_keywords", "hhhhhhhhhhhhhhhhhhhhhh");
                 post.put("categories", "cat1,Cat2");
