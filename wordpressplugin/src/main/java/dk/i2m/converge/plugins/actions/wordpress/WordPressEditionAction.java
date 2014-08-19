@@ -197,7 +197,7 @@ public class WordPressEditionAction implements EditionAction {
 //        }
         List<FileInfo> mediaItems = getMediaItems(newsItem);
 
-        if (update) { //tessting to not considering the update to fix l
+        if (update == false) { //tessting to not considering the update to fix l there has to be a acheck so that the item is not repulbished this pice should be removed
             try {
                 post = new HashMap<String, String>(); //Replace all Below with Converge ones
                 post.put("mt_keywords", "hhhhhhhhhhhhhhhhhhhhhh");
@@ -250,9 +250,9 @@ public class WordPressEditionAction implements EditionAction {
                 Object[] params = new Object[]{blog_id, this.username, this.password, post, Boolean.TRUE}; //to instantiate using the other Constructor
                 this.wordPressServiceClient.createNewPost(params);
                 if (mediaItems.size() > 0) {
-                    wordPressServiceClient.attachFiles(Integer.parseInt(blog_id), mediaItems);
+                    this.wordPressServiceClient.attachFiles(Integer.parseInt(blog_id), mediaItems);
                 } else if (mediaItems.size() == 1) {
-                    wordPressServiceClient.attachFileToPost(mediaItems.get(0), Integer.parseInt(blog_id));
+                    this.wordPressServiceClient.attachFileToPost(mediaItems.get(0), Integer.parseInt(blog_id));
                 } else {
                 }
 
