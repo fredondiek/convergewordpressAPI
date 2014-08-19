@@ -55,8 +55,6 @@ public class WordPressEditionAction implements EditionAction {
         SITE_URL,
         CONNECTION_TIMEOUT,
         IMAGE_RENDITION,
-        NODE_LANGUAGE,
-        NODE_TYPE,
         PASSWORD,
         PUBLISH_DELAY,
         PUBLISH_IMMEDIATELY,
@@ -69,7 +67,6 @@ public class WordPressEditionAction implements EditionAction {
         KEYWORDS,
         CATEGORIES,
         CUSTOME_FIELDS,
-        IGNORED_MAPPING,
         SERVICE_ENDPOINT,
         SOCKET_TIMEOUT,
         URL,
@@ -109,8 +106,6 @@ public class WordPressEditionAction implements EditionAction {
         Map<String, String> properties = action.getPropertiesAsMap();
         StringBuilder mapBuilder = new StringBuilder();
         mappings = mapBuilder.toString();
-        nodeType = properties.get(Property.NODE_TYPE.name());
-        nodeLanguage = properties.get(Property.NODE_LANGUAGE.name());
         publishDelay = properties.get(Property.PUBLISH_DELAY.name());
         publishImmediately = properties.get(Property.PUBLISH_IMMEDIATELY.name());
         renditionName = properties.get(Property.IMAGE_RENDITION.name());
@@ -178,22 +173,6 @@ public class WordPressEditionAction implements EditionAction {
         for (NewsItemPlacement nip : edition.getPlacements()) {
             LOG.log(Level.INFO, "Executing the News Plasement");
             processPlacement(ctx, nip);
-//            post = new HashMap<String, String>();
-//            post.put("mt_keywords", nip.getNewsItem().getTitle());
-//            post.put("categories", "cat1,cat2");
-//            post.put("post_content", nip.getNewsItem().getStory());
-//            post.put("post_excerpt", nip.getNewsItem().getBrief());
-//            post.put("post_status", "publish");
-//            post.put("post_date", new Date().toString());
-//            post.put("comment_status", "open");
-//            post.put("ping_status", "open");
-//            post.put("title", nip.getNewsItem().getTitle());
-//            post.put("link", "http://www.converge.org/");
-//            post.put("description", nip.getNewsItem().getStory());
-//            //Object[] params = new Object[]{"1", "Converge", "@converge14!", post, Boolean.TRUE};
-//            Object[] params = new Object[]{blog_id, this.username, this.password, post, Boolean.TRUE};
-//            result = wordPressServiceClient.createNewPost(params);
-
         }
         LOG.log(Level.WARNING, "{0} errors encounted", new Object[]{this.errors});
         LOG.log(Level.INFO, "Finishing action. Edition #{0}", new Object[]{edition.getId()});
@@ -216,9 +195,9 @@ public class WordPressEditionAction implements EditionAction {
         Edition edition = nip.getEdition();
         NewsItem newsItem = nip.getNewsItem();
         // Ignore NewsItem if it hasn't reached the end state of the workflow
-//        if (!newsItem.isEndState()) {   //Uncomment Me after tests
-//            return;
-//        }
+        if (!newsItem.isEndState()) {   //Uncomment Me after tests
+            return;
+        }
         boolean update = false;
 //        try {
 //            // determine if the news item is already uploaded    //Uncomment Me after tests
@@ -250,8 +229,10 @@ public class WordPressEditionAction implements EditionAction {
                 post.put("title", newsItem.getTitle());
                 post.put("link", "http://www.dst.org/");
                 post.put("description", newsItem.getSlugline());
-                Object[] params = new Object[]{this.username, this.password, post, Boolean.TRUE};
-                wordPressServiceClient.updateExistingPost(Integer.parseInt(blog_id), params);
+              //  Object[] params = new Object[]{this.username, this.password, post, Boolean.TRUE};
+                Object[] params = new Object[]{blog_id, this.username, this.password, post, Boolean.TRUE};
+               // this.wordPressServiceClient.updateExistingPost(Integer.parseInt(blog_id), params);
+                this.wordPressServiceClient.createNewPost(params);
                 if (mediaItems.size() > 0) {
                     wordPressServiceClient.attachFiles(Integer.parseInt(blog_id), mediaItems);
                 } else if (mediaItems.size() == 1) {
@@ -394,7 +375,6 @@ public class WordPressEditionAction implements EditionAction {
         return bundle.getString("PLUGIN_ABOUT");
     }
 
-   
     /**
      * Get Publish on text value.
      *
