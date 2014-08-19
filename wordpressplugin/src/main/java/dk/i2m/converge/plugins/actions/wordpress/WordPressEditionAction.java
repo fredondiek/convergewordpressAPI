@@ -51,6 +51,7 @@ public class WordPressEditionAction implements EditionAction {
     private WordPresslServicesClient wordPressServiceClient;
 
     private enum Property {
+
         SITE_URL,
         CONNECTION_TIMEOUT,
         IMAGE_RENDITION,
@@ -108,44 +109,27 @@ public class WordPressEditionAction implements EditionAction {
         publishDelay = properties.get(Property.PUBLISH_DELAY.name());
         publishImmediately = properties.get(Property.PUBLISH_IMMEDIATELY.name());
         renditionName = properties.get(Property.IMAGE_RENDITION.name());
-        publishImmediately = properties.get(Property.PUBLISH_IMMEDIATELY.name());
         published = properties.get(Property.PUBLISHED.name());
         postId = properties.get(Property.POSTID.name());
         post_status = properties.get(Property.POST_STATUS.name());
         blog_id = properties.get(Property.BLOG_ID.name());
         category = properties.get(Property.CATEGORIES.name());
-        custom_field = properties.get(Property.CUSTOME_FIELDS.name());
         tag = properties.get(Property.TAG.name());
-        sectionMapping = new HashMap<Long, Long>();
         this.hostname = properties.get(Property.URL.name());
-        this.endpoint = properties.get(Property.SERVICE_ENDPOINT.name());
         this.username = properties.get(Property.USERNAME.name());
         this.password = properties.get(Property.PASSWORD.name());
         this.connectionTimeout = properties.get(Property.CONNECTION_TIMEOUT.name());
         this.socketTimeout = properties.get(Property.SOCKET_TIMEOUT.name());
         this.website = properties.get(Property.SITE_URL.name());
 
-        if (hostname == null) {
-            throw new IllegalArgumentException("'hostname' cannot be null");
-        } else if (endpoint == null) {
-            throw new IllegalArgumentException("'endpoint' cannot be null");
-        } else if (username == null) {
+        if (username == null) {
             throw new IllegalArgumentException("'username' cannot be null");
         } else if (password == null) {
             throw new IllegalArgumentException("'password' cannot be null");
         }
-
-
-        if (publishImmediately == null && publishDelay == null) {
-            throw new IllegalArgumentException("'publishImmediately' or 'publishDelay' cannot be null");
-        } else if (publishImmediately == null && publishDelay != null) {
-            if (!isInteger(publishDelay)) {
-                throw new IllegalArgumentException("'publishDelay' must be an integer");
-            } else if (Integer.valueOf(publishDelay) <= 0) {
-                throw new IllegalArgumentException("'publishDelay' cannot be <= 0");
-            }
+        if (website == null) {
+            throw new IllegalArgumentException("'website address' cannot be null");
         }
-
         if (connectionTimeout == null) {
             connectionTimeout = "30000"; // 30 seconds
         } else if (!isInteger(connectionTimeout)) {
@@ -227,9 +211,9 @@ public class WordPressEditionAction implements EditionAction {
                 post.put("title", newsItem.getTitle());
                 post.put("link", "http://www.dst.org/");
                 post.put("description", newsItem.getSlugline());
-              //  Object[] params = new Object[]{this.username, this.password, post, Boolean.TRUE};
+                //  Object[] params = new Object[]{this.username, this.password, post, Boolean.TRUE};
                 Object[] params = new Object[]{blog_id, this.username, this.password, post, Boolean.TRUE};
-               // this.wordPressServiceClient.updateExistingPost(Integer.parseInt(blog_id), params);
+                // this.wordPressServiceClient.updateExistingPost(Integer.parseInt(blog_id), params);
                 this.wordPressServiceClient.createNewPost(params);
                 if (mediaItems.size() > 0) {
                     wordPressServiceClient.attachFiles(Integer.parseInt(blog_id), mediaItems);
