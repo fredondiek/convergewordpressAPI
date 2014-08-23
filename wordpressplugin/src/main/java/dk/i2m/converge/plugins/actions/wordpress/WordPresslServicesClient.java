@@ -16,6 +16,10 @@
  */
 package dk.i2m.converge.plugins.actions.wordpress;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -40,7 +44,7 @@ public class WordPresslServicesClient {
     private String websiteUrl;
     private String username;
     private String password;
-    private Integer replyTimeOut=60000;
+    private Integer replyTimeOut = 60000;
 
     /**
      * Creates a new instance of {@link WordPresslServicesClient}.
@@ -62,12 +66,12 @@ public class WordPresslServicesClient {
         this.username = username;
         this.password = password;
     }
-    
-    public WordPresslServicesClient(String websiteUrl, String username, String password,String connectionTimeout) {
+
+    public WordPresslServicesClient(String websiteUrl, String username, String password, String connectionTimeout) {
         this.websiteUrl = websiteUrl;
         this.username = username;
         this.password = password;
-        this.connectionTimeout=Integer.parseInt(connectionTimeout);
+        this.connectionTimeout = Integer.parseInt(connectionTimeout);
     }
 
     public WordPresslServicesClient(String websiteUrl, String username, String password, Integer socketTimeout, Integer connectionTimeout) {
@@ -75,9 +79,6 @@ public class WordPresslServicesClient {
         this.username = username;
         this.password = password;
     }
-
-   
-    
 
     public WordPresslServicesClient(String hostname, String endpoint, String username, String password, Integer socketTimeout, Integer connectionTimeout) {
         this.hostname = hostname;
@@ -108,7 +109,7 @@ public class WordPresslServicesClient {
             config.setConnectionTimeout(this.replyTimeOut);
             wordpRpcClient = getXmlRpcClient();
             wordpRpcClient.setConfig(config);
-            
+
             result = (Object[]) wordpRpcClient.execute("metaWeblog.getRecentPosts", new Object[]{9999, this.username, this.password});
             labelsearch:
             for (Object o : result) {
@@ -153,50 +154,16 @@ public class WordPresslServicesClient {
     }
 
     public PostInfo retrieveExistingPost(int blogId) throws IOException {
-        Object result;
         HashMap<String, String> resultstr;
-//        XmlRpcClient wordpRpcClient;
-//        boolean exists = false;
-//        PostInfo blog = null;
-//        try {
-//
-//            URL wordpresssite = new URL(this.websiteUrl + "/xmlrpc.php");
-//            XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-//            config.setServerURL(wordpresssite);
-//            config.setEnabledForExtensions(true);
-//            config.setEnabledForExceptions(true);           
-//            wordpRpcClient = getXmlRpcClient();
-//            wordpRpcClient.setConfig(config);
-//            
-//              // result = (Object) wordpRpcClient.execute("metaWeblog.getPost", new Object[]{99, "admin", "root"});
-//            result = (Object) wordpRpcClient.execute("metaWeblog.getPost", new Object[]{blogId,this.username, this.password});
-//
-//            if (result != null) {
-//                final Map m = (Map) result;
-//                final String url = (String) m.get("url");
-//                final String blogID = (String) m.get("blogid");
-//                final String blogName = (String) m.get("blogName");
-//                final String description = (String) m.get("description");
-//                final Date dateCreated = (Date) m.get("dateCreated");
-//                //final Object[] categories = (Object[]) m.get("categories");
-//                final String title = (String) m.get("title");
-//                final String mt_keywords = (String) m.get("mt_keywords");
-//                final String xmlRpcUrl = (String) m.get("xmlrpc");
-//                //if (Integer.parseInt(blogID) == blogId) {
-//                blog = new PostInfo();
-//                blog.setBlogId(blogID);
-//                blog.setPassword(password);
-//                blog.setUserName(username);
-//                   // exists = true;
-//                   // return blog;
-//                //}
-//            }
         PostInfo blog = null;
+        Gson gson = new Gson();
+        JsonObject jsonObject;
+        JsonParser jsonParser = new JsonParser();
+        String json;
+
         try {
             XmlRpcClient wordpRpcClient;
-
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-//            config.setServerURL(new URL(this.hostname + "/" + this.endpoint + "/xmlrpc.php"));
             config.setServerURL(new URL(this.websiteUrl + "/xmlrpc.php"));
             config.setEnabledForExtensions(true);
             config.setEnabledForExceptions(true);
@@ -205,45 +172,19 @@ public class WordPresslServicesClient {
             wordpRpcClient = getXmlRpcClient();
             wordpRpcClient.setConfig(config);
             resultstr = (HashMap<String, String>) wordpRpcClient.execute("metaWeblog.getPost", new Object[]{blogId, "admin", "root"});
+            json = gson.toJson(resultstr);
             if (resultstr != null) {
-//                final Map<String,String> m = (Map<String,String>) result;
-//                final String url = (String) m.get("url");
-//                final String blogID = (String) m.get("blogid");
-//                final String blogName = (String) m.get("blogName");
-//                final String description = (String) m.get("description");
-//                //final Date dateCreated = (Date) m.get("dateCreated");
-//                //final Object[] categories = (Object[]) m.get("categories");
-//                final String title = (String) m.get("title");
-//                final String mt_keywords = (String) m.get("mt_keywords");
-//                final String xmlRpcUrl = (String) m.get("xmlrpc");
-
-                // String[] arrValue = resultstr.split(",");
-                Map<String, String> valueMap = new HashMap<String, String>();
-//                for (String string : arrValue) {
-//                    String[] mapPair = string.split("=");
-//                    valueMap.put(mapPair[0], mapPair[1]);
-//                }
-//                ArrayList<String> arrayList = new ArrayList<String>(Arrays.asList(arrValue));
-//                for(String  item:arrayList){
-//                int equalpos=item.indexOf("=");
-//                String key=item.substring(0,equalpos);
-//                String value =item.substring(equalpos+1);
-//                valueMap.put(key, value);
-                //}
                 blog = new PostInfo();
-//                for(int i=0;i<arrValue.length;i++){
-//                String curr = arrValue[i];
-//                int equalpos=curr.indexOf("=");
-//                String key=curr.substring(0,equalpos);
-//                String value =curr.substring(equalpos+1);
-//                if(key.equalsIgnoreCase("blogid")){
-////               / blog.setBlogId(value);
-//                }
-//                }
-//                blog = new PostInfo();
-                blog.setBlogId(resultstr.get("blogid"));
-                blog.setPassword(password);
-                blog.setUserName(username);
+                Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.INFO, json);
+                JsonElement jsonElement = jsonParser.parse(json);
+                if (jsonElement.isJsonObject()) {
+                    jsonObject = jsonElement.getAsJsonObject();
+                    blog.setBlogId(jsonObject.get("postid").getAsString());
+                    blog.setBlogTitle(jsonObject.get("title").getAsString());
+                    blog.setBlogDescription(jsonObject.get("description").getAsString());
+                    blog.setPassword(password);
+                    blog.setUserName(username);
+                }
             }
         } catch (MalformedURLException ex) {
             Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
