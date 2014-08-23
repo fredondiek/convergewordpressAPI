@@ -5,7 +5,6 @@
 package dk.i2m.converge.plugins.actions.wordpress;
 
 import java.io.File;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -13,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import junit.framework.TestCase;
 import org.apache.xmlrpc.client.XmlRpcClient;
-import org.apache.commons.io.FileUtils;
 
 /**
  *
@@ -102,7 +100,7 @@ public class WordPresslServicesClientTest extends TestCase {
      * Test of retrieveExistingPost method, of class WordPresslServicesClient.
      */
     public void testRetrieveExistingPost() throws Exception {
-        int blogId = 155;
+        int blogId = 1;
         String websiteURL = "http://localhost:8282/wordpress";
         WordPresslServicesClient instance = new WordPresslServicesClient(websiteURL, "admin", "root");
 
@@ -175,7 +173,7 @@ public class WordPresslServicesClientTest extends TestCase {
         File file = new File("C://java_code//3.png");
         if (!file.exists()) {
             file.createNewFile();
-        };
+        }
         System.out.println(file);
         FileInfo fileInfo = new FileInfo(file, "png");
         // List<FileInfo> fileInfoList = new ArrayList<FileInfo>();
