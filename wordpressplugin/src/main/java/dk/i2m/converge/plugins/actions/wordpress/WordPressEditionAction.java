@@ -67,9 +67,7 @@ public class WordPressEditionAction implements EditionAction {
         KEYWORDS,
         CATEGORIES,
         CUSTOME_FIELDS,
-        SERVICE_ENDPOINT,
         SOCKET_TIMEOUT,
-        URL,
         USERNAME,
         TAG
     }
@@ -100,6 +98,7 @@ public class WordPressEditionAction implements EditionAction {
     private String custom_field;
     private int ignored_ping;
     private String tag;
+    private String keywords;
 
     private void init(OutletEditionAction action) {
 
@@ -115,13 +114,29 @@ public class WordPressEditionAction implements EditionAction {
         blog_id = properties.get(Property.BLOG_ID.name());
         category = properties.get(Property.CATEGORIES.name());
         tag = properties.get(Property.TAG.name());
-        this.hostname = properties.get(Property.URL.name());
+        keywords = properties.get(Property.KEYWORDS.name());
         this.username = properties.get(Property.USERNAME.name());
         this.password = properties.get(Property.PASSWORD.name());
         this.connectionTimeout = properties.get(Property.CONNECTION_TIMEOUT.name());
         this.socketTimeout = properties.get(Property.SOCKET_TIMEOUT.name());
         this.website = properties.get(Property.SITE_URL.name());
 
+
+        if (tag == null) {
+            tag = "";
+        }
+        if (category == null) {
+            category = "";
+        }
+        if (postId == null) {
+            postId = "1";
+        }
+        if (blog_id == null) {
+            blog_id = "1";
+        }
+        if (keywords == null) {
+            keywords = "";
+        }
         if (username == null) {
             throw new IllegalArgumentException("'username' cannot be null");
         } else if (password == null) {
@@ -200,8 +215,8 @@ public class WordPressEditionAction implements EditionAction {
         if (update == false) { //tessting to not considering the update to fix l there has to be a acheck so that the item is not repulbished this pice should be removed
             try {
                 post = new HashMap<String, String>(); //Replace all Below with Converge ones
-                post.put("mt_keywords", "hhhhhhhhhhhhhhhhhhhhhh");
-                post.put("categories", "cat1,Cat2");
+                post.put("mt_keywords", keywords);
+                post.put("categories", category);
                 post.put("post_content", newsItem.getStory());
                 post.put("post_excerpt", newsItem.getBrief());
                 post.put("post_status", "publish");
@@ -235,9 +250,9 @@ public class WordPressEditionAction implements EditionAction {
             NewsItemEditionState submitted = ctx.addNewsItemEditionState(edition.getId(), newsItem.getId(), DATE, null);
 
             try {
-                post = new HashMap<String, String>(); //Replace all Below with Converge ones
-                post.put("mt_keywords", "hhhhhhhhhhhhhhhhhhhhhh");
-                post.put("categories", "cat1,Cat2");
+                post = new HashMap<String, String>();
+                post.put("mt_keywords", keywords);
+                post.put("categories", category);
                 post.put("post_content", newsItem.getStory());
                 post.put("post_excerpt", newsItem.getBrief());
                 post.put("post_status", "publish");
