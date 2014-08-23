@@ -14,6 +14,9 @@ public class PostInfo {
     private String userName;
     private String password;
     private String blogId;
+    private String blogTitle;
+    private String description;
+    
 
     public PostInfo() {
     }
@@ -38,6 +41,10 @@ public class PostInfo {
     public String getBlogId() {
         return blogId;
     }
+    
+    public String getBlogDescription() {
+        return description;
+    }
 
     public String getPassword() {
         return password;
@@ -45,6 +52,10 @@ public class PostInfo {
 
     public String getUserName() {
         return userName;
+    }
+    
+    public String getBlogTitle(){
+      return blogTitle;
     }
 
     /**
@@ -73,5 +84,13 @@ public class PostInfo {
      */
     public void setBlogId(String blogId) {
         this.blogId = blogId;
+    }
+    
+    public void setBlogTitle(String title){
+        this.blogTitle=title;
+    }
+    
+    public void setBlogDescription(String description){
+        this.description=description;
     }
 }
