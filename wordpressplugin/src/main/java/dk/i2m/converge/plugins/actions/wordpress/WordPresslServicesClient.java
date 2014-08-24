@@ -97,8 +97,13 @@ public class WordPresslServicesClient {
     public boolean exists(int blogId) throws WordPressServerConnectionException {
         Object[] result;
         XmlRpcClient wordpRpcClient;
+        PostInfo blog;
+        Gson gson = new Gson();
+        JsonObject jsonObject;
+        JsonParser jsonParser = new JsonParser();
+        String json;
         boolean exists = false;
-        // Object[] obj = (Object[]) client.execute("wp.getUsersBlogs", params);
+        int count = 0;
         try {
             URL wordpresssite = new URL(this.websiteUrl + "/xmlrpc.php");
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
@@ -111,15 +116,28 @@ public class WordPresslServicesClient {
             wordpRpcClient.setConfig(config);
 
             result = (Object[]) wordpRpcClient.execute("metaWeblog.getRecentPosts", new Object[]{9999, this.username, this.password});
+
             labelsearch:
             for (Object o : result) {
-                Map m = (Map) o;
-                String blogID = (String) m.get("blogid");
-                String blogName = (String) m.get("blogName");
-                String xmlRpcUrl = (String) m.get("xmlrpc");
-                System.out.println(blogID + " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>......");
-                if (blogID.equalsIgnoreCase(blogId + "")) {
+                //Map m = (Map) o;
+                json = gson.toJson((HashMap<String,String>)o);
+                System.out.println(json + " " + count++);
+                blog = new PostInfo();
+                Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.INFO, json);
+                JsonElement jsonElement = jsonParser.parse(json);
+                if (jsonElement.isJsonObject()) {
+                    jsonObject = jsonElement.getAsJsonObject();
+                    blog.setBlogId(jsonObject.get("postid").getAsString());
+                    System.out.println(blog.getBlogId());
+                    blog.setBlogTitle(jsonObject.get("title").getAsString());
+                    blog.setBlogDescription(jsonObject.get("description").getAsString());
+                    blog.setPassword(password);
+                    blog.setUserName(username);
+                    
+                }
+                if (Integer.parseInt(blog.getBlogId()) == blogId) {
                     exists = true;
+                    System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0");
                     break labelsearch;
                 }
             }
@@ -131,12 +149,12 @@ public class WordPresslServicesClient {
         return exists;
     }
 
-    public String createNewPost(Object[] itemsPostParams) {
-        String result = "";
+    public boolean createNewPost(Object[] itemsPostParams) {
+        String result;
         XmlRpcClient wordpRpcClient;
+        boolean created = false;
         try {
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-//            config.setServerURL(new URL(this.hostname + "/" + this.endpoint + "/xmlrpc.php"));
             config.setServerURL(new URL(this.websiteUrl + "/xmlrpc.php"));
             config.setEnabledForExtensions(true);
             config.setEnabledForExceptions(true);
@@ -145,12 +163,17 @@ public class WordPresslServicesClient {
             wordpRpcClient = getXmlRpcClient();
             wordpRpcClient.setConfig(config);
             result = (String) wordpRpcClient.execute("metaWeblog.newPost", itemsPostParams);
+            if (Integer.parseInt(result) != 0) {
+                created = true;
+            } else {
+            }
+
         } catch (MalformedURLException ex) {
             Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (XmlRpcException ex) {
             Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return result;
+        return created;
     }
 
     public PostInfo retrieveExistingPost(int blogId) throws IOException {
@@ -237,8 +260,6 @@ public class WordPresslServicesClient {
             config.setConnectionTimeout(this.replyTimeOut);
             wordpRpcClient = getXmlRpcClient();
             wordpRpcClient.setConfig(config);
-            //Object  result = (Object) client.execute("metaWeblog.deletePost", new Object[]{1,"32", "admin","root"});
-
             result = wordpRpcClient.execute("metaWeblog.deletePost", new Object[]{1, blogId, this.username, this.password});
             if (result != null) {
                 //CHECK THE RETURNED STRING FURTHER LOGIC NEEDED HERE
@@ -257,6 +278,12 @@ public class WordPresslServicesClient {
     public String attachFileToPost(FileInfo fileInfo, int blogId) throws WordPressServerConnectionException {
         XmlRpcClient worRpcClientclient;
         String result = "";
+        Gson gson = new Gson();
+        JsonObject jsonObject;
+        JsonParser jsonParser = new JsonParser();
+        String json;
+        HashMap<String, String> resultstr;
+        
         try {
             worRpcClientclient = getXmlRpcClient();
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
@@ -279,10 +306,21 @@ public class WordPresslServicesClient {
             fileData.put("overwrite", Boolean.FALSE);
             Object[] params = new Object[]{blogId, username, password, fileData};//wp.uploadFile
             Object uploadResult = worRpcClientclient.execute("wp.uploadFile", params);//newMediaObject
-            result = uploadResult.toString();//metaWeblog.uploadFile
-
+            result =uploadResult.toString();//metaWeblog.uploadFile
+            resultstr=(HashMap<String, String>)uploadResult;
+            json = gson.toJson(uploadResult);
+            JsonElement jsonElement = jsonParser.parse(json);
+             if (jsonElement.isJsonObject()) {
+                 FileInfo file = new FileInfo(null, json);
+                    jsonObject = jsonElement.getAsJsonObject();
+                    //{"id":"453","file":"3.png","type":"png","url":"http://localhost:8282/wordpress/wp-content/uploads/2014/08/352.png"}
+                    System.out.println(jsonObject.get("file"));
+                    result = jsonObject.get("file").toString().replace("\"", ""); //More logic needed here
+                    
+                }
+            
             LOG.log(Level.FINER, "Attach file response: {0}", uploadResult.toString());
-            return result;
+          
         } catch (XmlRpcException ex) {
             Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
@@ -291,8 +329,13 @@ public class WordPresslServicesClient {
         return result;
     }
 
-    public String attachFiles(int blogId, List<FileInfo> files) throws WordPressServerConnectionException {
+    public boolean attachFiles(int blogId, List<FileInfo> files) throws WordPressServerConnectionException {
         String result = "";
+        boolean fileattached = false;
+        Gson gson = new Gson();
+        JsonObject jsonObject;
+        JsonParser jsonParser = new JsonParser();
+        String json;
         try {
             int i = 0;
             XmlRpcClient worRpcClientclient;
@@ -319,16 +362,28 @@ public class WordPresslServicesClient {
                 Object[] params = new Object[]{blogId, username, password, fileData};//wp.uploadFile
                 Object uploadResult = worRpcClientclient.execute("wp.uploadFile", params);
                 result = uploadResult.toString();//metaWeblog.uploadFile
+            
+            json = gson.toJson(uploadResult);
+            JsonElement jsonElement = jsonParser.parse(json);
+             if (jsonElement.isJsonObject()) {
+                 FileInfo file_ = new FileInfo(null, json);
+                    jsonObject = jsonElement.getAsJsonObject();
+                    //{"id":"453","file":"3.png","type":"png","url":"http://localhost:8282/wordpress/wp-content/uploads/2014/08/352.png"}
+                    System.out.println(jsonObject.get("file"));
+                    result = jsonObject.get("file").toString().replace("\"", ""); //More logic needed here
+                    if(!result.substring(result.lastIndexOf(".")+1).equalsIgnoreCase("")){
+                        fileattached = true;
+                    }
+                    
+                }
             }
-
             LOG.log(Level.FINER, "Attach file response: {0}", result);
-            return result;
         } catch (XmlRpcException ex) {
             Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
             throw new WordPressServerConnectionException("Could not attach files.", ex);
         }
-        return result;
+        return fileattached;
     }
 
     public static enum PostType {
