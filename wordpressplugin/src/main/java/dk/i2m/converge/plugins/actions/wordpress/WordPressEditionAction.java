@@ -193,7 +193,7 @@ public class WordPressEditionAction implements EditionAction {
         Edition edition = nip.getEdition();
         NewsItem newsItem = nip.getNewsItem();
         // Ignore NewsItem if it hasn't reached the end state of the workflow
-        if (!newsItem.isEndState()) {   //Uncomment Me after tests
+        if (!newsItem.isEndState()) {
             return;
         }
         boolean update = false;
