@@ -241,12 +241,23 @@ public class WordPressEditionAction implements EditionAction {
                 //  Object[] params = new Object[]{this.username, this.password, post, Boolean.TRUE};
                 Object[] params = new Object[]{blog_id, this.username, this.password, post, Boolean.TRUE};
                 // this.wordPressServiceClient.updateExistingPost(Integer.parseInt(blog_id), params);
-                this.wordPressServiceClient.createNewPost(params);
-                if (mediaItems.size() > 0) {
-                    wordPressServiceClient.attachFiles(Integer.parseInt(blog_id), mediaItems);
-                } else if (mediaItems.size() == 1) {
-                    wordPressServiceClient.attachFileToPost(mediaItems.get(0), Integer.parseInt(blog_id));
+                //this.wordPressServiceClient.createNewPost(params);
+                if (mediaItems.isEmpty()) {
+                    this.wordPressServiceClient.createNewPost(params);
                 } else {
+                    if (mediaItems.size() == 1) {
+                        Map<String, String> paramz = wordPressServiceClient.attachFileToPost(mediaItems.get(0), Integer.parseInt(blog_id));
+                        post.put("wp_post_thumbnail", paramz.get("id"));
+                        this.wordPressServiceClient.createNewPost(params);
+                    } else if (mediaItems.size() > 1) {
+                        for (int i = 0; i < mediaItems.size(); i++) {
+                            Map<String, String> paramz = wordPressServiceClient.attachFileToPost(mediaItems.get(0), Integer.parseInt(blog_id));
+                            post.put("wp_post_thumbnail", paramz.get("id"));
+                            this.wordPressServiceClient.createNewPost(params);
+                        }
+
+                    }
+
                 }
 
             } catch (Exception ex) {
