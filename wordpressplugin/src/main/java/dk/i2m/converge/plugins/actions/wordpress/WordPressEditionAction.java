@@ -204,6 +204,7 @@ public class WordPressEditionAction implements EditionAction {
         HashMap post;
         Edition edition = nip.getEdition();
         NewsItem newsItem = nip.getNewsItem();
+        Map<String, String> paramz;
         // Ignore NewsItem if it hasn't reached the end state of the workflow
         if (!newsItem.isEndState()) {
             return;
@@ -237,24 +238,27 @@ public class WordPressEditionAction implements EditionAction {
                 post.put("ping_status", "open");
                 post.put("title", newsItem.getTitle());
                 post.put("link", "http://www.dst.org/");
-                post.put("description", newsItem.getSlugline());
+                post.put("description", newsItem.getStory());
                 //  Object[] params = new Object[]{this.username, this.password, post, Boolean.TRUE};
                 Object[] params = new Object[]{blog_id, this.username, this.password, post, Boolean.TRUE};
                 // this.wordPressServiceClient.updateExistingPost(Integer.parseInt(blog_id), params);
                 //this.wordPressServiceClient.createNewPost(params);
+                String[] ids = {};
                 if (mediaItems.isEmpty()) {
                     this.wordPressServiceClient.createNewPost(params);
                 } else {
                     if (mediaItems.size() == 1) {
-                        Map<String, String> paramz = wordPressServiceClient.attachFileToPost(mediaItems.get(0), Integer.parseInt(blog_id));
+                        paramz = wordPressServiceClient.attachFileToPost(mediaItems.get(0), Integer.parseInt(blog_id));
                         post.put("wp_post_thumbnail", paramz.get("id"));
                         this.wordPressServiceClient.createNewPost(params);
                     } else if (mediaItems.size() > 1) {
                         for (int i = 0; i < mediaItems.size(); i++) {
-                            Map<String, String> paramz = wordPressServiceClient.attachFileToPost(mediaItems.get(0), Integer.parseInt(blog_id));
-                            post.put("wp_post_thumbnail", paramz.get("id"));
-                            this.wordPressServiceClient.createNewPost(params);
+                            paramz = wordPressServiceClient.attachFileToPost(mediaItems.get(i), Integer.parseInt(blog_id));
+                            ids[i] = paramz.get("id");
+
                         }
+                        post.put("wp_post_thumbnail", ids);
+                        this.wordPressServiceClient.createNewPost(params);
 
                     }
 
@@ -284,14 +288,26 @@ public class WordPressEditionAction implements EditionAction {
                 post.put("ping_status", "open");
                 post.put("title", newsItem.getTitle());
                 post.put("link", "http://www.dst.org/");
-                post.put("description", newsItem.getSlugline());
+                post.put("description", newsItem.getStory());
                 Object[] params = new Object[]{blog_id, this.username, this.password, post, Boolean.TRUE}; //to instantiate using the other Constructor
-                this.wordPressServiceClient.createNewPost(params);
-                if (mediaItems.size() > 0) {
-                    this.wordPressServiceClient.attachFiles(Integer.parseInt(blog_id), mediaItems);
-                } else if (mediaItems.size() == 1) {
-                    this.wordPressServiceClient.attachFileToPost(mediaItems.get(0), Integer.parseInt(blog_id));
+                String[] ids = {};
+                if (mediaItems.isEmpty()) {
+                    this.wordPressServiceClient.createNewPost(params);
                 } else {
+                    if (mediaItems.size() == 1) {
+                        paramz = wordPressServiceClient.attachFileToPost(mediaItems.get(0), Integer.parseInt(blog_id));
+                        post.put("wp_post_thumbnail", paramz.get("id"));
+                        this.wordPressServiceClient.createNewPost(params);
+                    } else if (mediaItems.size() > 1) {
+                        for (int i = 0; i < mediaItems.size(); i++) {
+                            paramz = wordPressServiceClient.attachFileToPost(mediaItems.get(i), Integer.parseInt(blog_id));
+                            ids[i] = paramz.get("id");
+
+                        }
+                        post.put("wp_post_thumbnail", ids);
+                        this.wordPressServiceClient.createNewPost(params);
+                    }
+
                 }
 
             } catch (WordPressServerConnectionException ex) {
