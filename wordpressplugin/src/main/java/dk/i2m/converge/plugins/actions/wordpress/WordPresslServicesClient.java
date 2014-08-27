@@ -22,7 +22,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dk.i2m.converge.plugins.actions.wordpress.util.Utils;
 import java.io.FileInputStream;
+
 import java.io.IOException;
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -117,7 +119,7 @@ public class WordPresslServicesClient {
             wordpRpcClient.setConfig(config);
 
             result = (Object[]) wordpRpcClient.execute("metaWeblog.getRecentPosts", new Object[]{9999, this.username, this.password});
-
+//Sections  //category  
             labelsearch:
             for (Object o : result) {
                 //Map m = (Map) o;
@@ -274,7 +276,6 @@ public class WordPresslServicesClient {
             Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         }
         return deleted;
-
     }
 
     public Map<String, String> attachFileToPost(FileInfo fileInfo, int blogId) throws WordPressServerConnectionException {
@@ -299,7 +300,7 @@ public class WordPresslServicesClient {
             config.setConnectionTimeout(connectionTimeout);
             config.setConnectionTimeout(this.replyTimeOut);
             worRpcClientclient.setConfig(config);
-
+            //File file = fileInfo.getFile();
             byte[] bytes = new byte[(int) fileInfo.getFile().length()];
             FileInputStream fin = new FileInputStream(fileInfo.getFile());
             fin.read(bytes);
@@ -307,28 +308,46 @@ public class WordPresslServicesClient {
 
             Map<Object, Object> fileData = new HashMap<Object, Object>();
             fileData.put("name", fileInfo.getFile().getName());
-            fileData.put("type", fileInfo.getFile().getName().substring(fileInfo.getFile().getName().lastIndexOf(".") + 1));
+            fileData.put("type", "image/" + fileInfo.getFile().getName().substring(fileInfo.getFile().getName().lastIndexOf(".") + 1));
+            System.out.println(fileInfo.getFile().getName().substring(fileInfo.getFile().getName().lastIndexOf(".") + 1));
             fileData.put("bits", bytes);
             fileData.put("overwrite", Boolean.FALSE);
-            Object[] params = new Object[]{blogId, username, password, fileData};//wp.uploadFile
-            Object uploadResult = worRpcClientclient.execute("wp.uploadFile", params);//newMediaObject
+            Object[] params = new Object[]{blogId, username, password, fileData};//wp.uploadFile//wp.uploadFile
+            Object uploadResult = worRpcClientclient.execute("metaWeblog.newMediaObject", params);//newMediaObject//metaWeblog.newMediaObject//metaWeblog.newMediaObject
             result = uploadResult.toString();//metaWeblog.uploadFile
             resultstr = (HashMap<String, String>) uploadResult;
             json = gson.toJson(uploadResult);
             JsonElement jsonElement = jsonParser.parse(json);
-            if (jsonElement.isJsonObject()) {
-                FileInfo file = new FileInfo(null, json);
-                jsonObject = jsonElement.getAsJsonObject();
-                //{"id":"453","file":"3.png","type":"png","url":"http://localhost:8282/wordpress/wp-content/uploads/2014/08/352.png"}
-                System.out.println(jsonObject.get("file"));
-                result = jsonObject.get("file").toString().replace("\"", ""); //More logic needed here
-                fileId = jsonObject.get("id").toString().replace("\"", "");
-                isId = Utils.isInteger(fileId);
-                resultMap.put("boolean", isId + "");
-                resultMap.put("id", fileId);
+            if (jsonElement.isJsonNull()) {
+                uploadResult = worRpcClientclient.execute("wp.uploadFile", params);
+                if (jsonElement.isJsonObject()) {
+                    FileInfo file = new FileInfo(null, json);
+                    jsonObject = jsonElement.getAsJsonObject();
+                    //{"id":"453","file":"3.png","type":"png","url":"http://localhost:8282/wordpress/wp-content/uploads/2014/08/352.png"}
+                    System.out.println(jsonObject.get("file"));
+                    result = jsonObject.get("file").toString().replace("\"", ""); //More logic needed here
+                    fileId = jsonObject.get("id").toString().replace("\"", "");
+                    isId = Utils.isInteger(fileId);
+                    resultMap.put("boolean", isId + "");
+                    resultMap.put("id", fileId);
+                    resultMap.put("url", jsonObject.get("url").toString());
 
+                }
+            } else {
+                if (jsonElement.isJsonObject()) {
+                    FileInfo file = new FileInfo(null, json);
+                    jsonObject = jsonElement.getAsJsonObject();
+                    //{"id":"453","file":"3.png","type":"png","url":"http://localhost:8282/wordpress/wp-content/uploads/2014/08/352.png"}
+                    System.out.println(jsonObject.get("file"));
+                    result = jsonObject.get("file").toString().replace("\"", ""); //More logic needed here
+                    fileId = jsonObject.get("id").toString().replace("\"", "");
+                    isId = Utils.isInteger(fileId);
+                    resultMap.put("boolean", isId + "");
+                    resultMap.put("id", fileId);
+                    resultMap.put("url", jsonObject.get("url").toString());
+
+                }
             }
-
             LOG.log(Level.FINER, "Attach file response: {0}", uploadResult.toString());
 
         } catch (XmlRpcException ex) {
