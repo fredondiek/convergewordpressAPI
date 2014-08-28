@@ -136,7 +136,6 @@ public class WordPresslServicesClientTest extends TestCase {
         WordPresslServicesClient instance = new WordPresslServicesClient(websiteURL, "admin", "root");
         Map<String, String> post = new HashMap<String, String>();
         String text = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.";
-
         post.put("mt_keywords", "testkeyword");
         post.put("categories", "testcat,Cat2");
         post.put("post_content", text);
@@ -183,30 +182,41 @@ public class WordPresslServicesClientTest extends TestCase {
      */
     public void testAttachFileToPost() throws Exception {
         System.out.println("attachFileToPost");
-        File file = new File("C://java_code//3.png");
+        File file = new File("C://java_code//3.jpg");
+        String extension = file.getName().substring(file.getName().lastIndexOf(".") + 1);
         if (!file.exists()) {
             file.createNewFile();
         }
 
-        FileInfo fileInfo = new FileInfo(file, "png");
+        FileInfo fileInfo = new FileInfo(file, extension);
         int blogId = 1;
+        //http://164.177.147.31/brands/classicfm/
         String websiteURL = "http://localhost:8282/wordpress";
+        //String websiteURL = "http://164.177.147.31/brands/classicfm";
         WordPresslServicesClient instance = new WordPresslServicesClient(websiteURL, "admin", "root");
-//        String expResult = "3.png";
-       
-        String expResult = true+"";
+        //WordPresslServicesClient instance = new WordPresslServicesClient(websiteURL, "Converge", "ConvergeAPI");
+
+        //String expResult = "3.png";
+//$status = $rpc->query(
+//    'metaWeblog.newMediaObject',
+//    $blog_id,
+//    $username,
+//    $password,
+//    $data
+//);
+        String expResult = true + "";
 
         //Act
         Map<String, String> post = new HashMap<String, String>();
         String text = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.";
 
-        
 
-        
-        Map<String,String> params = instance.attachFileToPost(fileInfo, blogId);
+        Map<String, String> params = instance.attachFileToPost(fileInfo, blogId);
         String result = params.get("boolean");
-        post.put("mt_keywords", "testkeyword");
+        post.put("mt_keywords", "testkeyword,testkey3");
         post.put("categories", "testcat,Cat2");
+        post.put("post_type", "post");
+
         post.put("post_content", text);
         post.put("post_excerpt", "Test Excerpt");
         post.put("post_status", "publish");
@@ -217,7 +227,13 @@ public class WordPresslServicesClientTest extends TestCase {
         post.put("link", "http://www.dst.org/");
         post.put("description", text);
         post.put("wp_post_thumbnail", params.get("id"));
+        post.put("wp_featured_image", params.get("id"));
+        post.put("thumbnail", params.get("id"));
+        post.put("featured_image_url", params.get("url"));
+
         Object[] itemsPostParams = new Object[]{1, "admin", "root", post};
+        //Object[] itemsPostParams = new Object[]{1, "Converge", "ConvergeAPI", post};
+
         instance.createNewPost(itemsPostParams);
         //Assert
         assertEquals(expResult, result);
