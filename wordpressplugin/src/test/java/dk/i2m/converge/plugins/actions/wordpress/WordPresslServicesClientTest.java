@@ -83,21 +83,26 @@ public class WordPresslServicesClientTest extends TestCase {
      * Test of createNewPost method, of class WordPresslServicesClient.
      */
     public void testCreateNewPost() {
-        HashMap<String, String> post = new HashMap<String, String>(); //Replace all Below with Converge ones
+        HashMap<Object, Object> post = new HashMap<Object, Object>(); //Replace all Below with Converge ones
+        String text = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.";
+       String category ="mandia,karige";
+       
         post.put("mt_keywords", "Lorem ,ipsum");
-        post.put("categories", "cat1,Cat2");
+        post.put("categories", category.split(","));
         post.put("post_content", "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry’s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum");
         post.put("post_excerpt", "Lorem ipsum");
         post.put("post_status", "publish");
         post.put("post_date", new Date().toString());
         post.put("comment_status", "open");
         post.put("ping_status", "open");
-        post.put("title", "title");
+        post.put("title", "Test Title");
         post.put("link", "http://www.dst.org/");
-        post.put("description", "ffffffffffffffffffffffffffffffffffffffff");
+        post.put("description", text);
 
-        Object[] itemsPostParams = new Object[]{1, "admin", "root", post, Boolean.TRUE};
-        WordPresslServicesClient instance = new WordPresslServicesClient("http://localhost:8282/wordpress", "admin", "root");
+        //Object[] itemsPostParams = new Object[]{1, "admin", "root", post, Boolean.TRUE};
+         Object[] itemsPostParams = new Object[]{1, "Converge", "ConvergeAPI", post, Boolean.TRUE};
+        //WordPresslServicesClient instance = new WordPresslServicesClient("http://localhost:8282/wordpress", "admin", "root");
+         WordPresslServicesClient instance = new WordPresslServicesClient("https://radioafricaplatforms.com/apps/converge", "Converge", "ConvergeAPI");
 
         //Act
 
@@ -105,6 +110,7 @@ public class WordPresslServicesClientTest extends TestCase {
 
         //Assert
         boolean expResult = true; //This result changes increments by 2 for wordpress sites
+
         assertEquals(expResult, actualResult);
 
     }
@@ -127,38 +133,37 @@ public class WordPresslServicesClientTest extends TestCase {
 
     }
 
-    /**
-     * Test of updateExistingPost method, of class WordPresslServicesClient.
-     */
-    public void testUpdateExistingPost() throws Exception {
-        int blogId = 155;
-        String websiteURL = "http://localhost:8282/wordpress";
-        WordPresslServicesClient instance = new WordPresslServicesClient(websiteURL, "admin", "root");
-        Map<String, String> post = new HashMap<String, String>();
-        String text = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.";
-        post.put("mt_keywords", "testkeyword");
-        post.put("categories", "testcat,Cat2");
-        post.put("post_content", text);
-        post.put("post_excerpt", "Test Excerpt");
-        post.put("post_status", "publish");
-        post.put("post_date", new Date().toString());
-        post.put("comment_status", "open");
-        post.put("ping_status", "open");
-        post.put("title", "Another Updated Title from Converge, From Converge");
-        post.put("link", "http://www.vonhagen.org/");
-        post.put("description", text);
-
-        Object[] itemsPostParams = new Object[]{157, "admin", "root", post};
-        boolean expResult = true;
-
-        //Act
-        boolean result = instance.updateExistingPost(blogId, itemsPostParams);
-
-        //Assert
-        assertEquals(expResult, result);
-
-    }
-
+//    /**
+//     * Test of updateExistingPost method, of class WordPresslServicesClient.
+//     */
+//    public void testUpdateExistingPost() throws Exception {
+//        int blogId = 155;       
+//        String websiteURL = "https://localhost:8282/wordpress";
+//        WordPresslServicesClient instance = new WordPresslServicesClient(websiteURL, "admin", "root");
+//        Map<String, String> post = new HashMap<String, String>();
+//        String text = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.";
+//        post.put("mt_keywords", "testkeyword");
+//        post.put("categories", "testcat,Cat2");
+//        post.put("post_content", text);
+//        post.put("post_excerpt", "Test Excerpt");
+//        post.put("post_status", "publish");
+//        post.put("post_date", new Date().toString());
+//        post.put("comment_status", "open");
+//        post.put("ping_status", "open");
+//        post.put("title", "Another Updated Title from Converge, From Converge");
+//        post.put("link", "http://www.vonhagen.org/");
+//        post.put("description", text);
+//
+//        Object[] itemsPostParams = new Object[]{157, "admin", "root", post};
+//        boolean expResult = true;
+//
+//        //Act
+//        boolean result = instance.updateExistingPost(blogId, itemsPostParams);
+//
+//        //Assert
+//        assertEquals(expResult, result);
+//
+//    }
     /**
      * Test of deleteExistingPost method, of class WordPresslServicesClient.
      */
@@ -191,26 +196,20 @@ public class WordPresslServicesClientTest extends TestCase {
         FileInfo fileInfo = new FileInfo(file, extension);
         int blogId = 1;
         //http://164.177.147.31/brands/classicfm/
-        String websiteURL = "http://localhost:8282/wordpress";
+        //String websiteURL = "http://localhost:8282/wordpress";
         //String websiteURL = "http://164.177.147.31/brands/classicfm";
-        WordPresslServicesClient instance = new WordPresslServicesClient(websiteURL, "admin", "root");
-        //WordPresslServicesClient instance = new WordPresslServicesClient(websiteURL, "Converge", "ConvergeAPI");
+        String websiteURL = "https://radioafricaplatforms.com/apps/converge";
+        //https://radioafricaplatforms.com/apps/converge/
+        //WordPresslServicesClient instance = new WordPresslServicesClient(websiteURL, "admin", "root");
+        WordPresslServicesClient instance = new WordPresslServicesClient(websiteURL, "Converge", "ConvergeAPI");
 
         //String expResult = "3.png";
-//$status = $rpc->query(
-//    'metaWeblog.newMediaObject',
-//    $blog_id,
-//    $username,
-//    $password,
-//    $data
-//);
+
         String expResult = true + "";
 
         //Act
         Map<String, String> post = new HashMap<String, String>();
         String text = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.";
-
-
         Map<String, String> params = instance.attachFileToPost(fileInfo, blogId);
         String result = params.get("boolean");
         post.put("mt_keywords", "testkeyword,testkey3");
@@ -230,9 +229,8 @@ public class WordPresslServicesClientTest extends TestCase {
         post.put("wp_featured_image", params.get("id"));
         post.put("thumbnail", params.get("id"));
         post.put("featured_image_url", params.get("url"));
-
-        Object[] itemsPostParams = new Object[]{1, "admin", "root", post};
-        //Object[] itemsPostParams = new Object[]{1, "Converge", "ConvergeAPI", post};
+        // Object[] itemsPostParams = new Object[]{1, "admin", "root", post};
+        Object[] itemsPostParams = new Object[]{1, "Converge", "ConvergeAPI", post};
 
         instance.createNewPost(itemsPostParams);
         //Assert
@@ -246,13 +244,15 @@ public class WordPresslServicesClientTest extends TestCase {
     public void testAttachFiles() throws Exception {
         System.out.println("attachFiles");
         int blogId = 179;
+        String extension;
         List<FileInfo> files = new ArrayList<FileInfo>();
         File file = new File("C://java_code//3.png");
+        extension = file.getName().substring(file.getName().lastIndexOf(".") + 1);
         if (!file.exists()) {
             file.createNewFile();
         }
         System.out.println(file.getName());
-        FileInfo fileInfo = new FileInfo(file, "png");
+        FileInfo fileInfo = new FileInfo(file, extension);
         files.add(fileInfo);
         String websiteURL = "http://localhost:8282/wordpress";
         WordPresslServicesClient instance = new WordPresslServicesClient(websiteURL, "admin", "root");
