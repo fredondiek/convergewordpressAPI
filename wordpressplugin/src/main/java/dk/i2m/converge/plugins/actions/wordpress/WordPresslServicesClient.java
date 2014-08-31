@@ -39,18 +39,13 @@ import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 import java.security.*;
-import java.security.spec.*;
 import java.security.cert.*;
-import java.util.Vector;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
-
-import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
 
 public class WordPresslServicesClient {
 
@@ -124,35 +119,7 @@ public class WordPresslServicesClient {
         int count = 0;
         //loadKeyStore();//CHANGE ME
         try {
-
-            TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
-            public X509Certificate[] getAcceptedIssuers() {
-                return null;
-            }
-
-            public void checkClientTrusted(X509Certificate[] certs,
-                    String authType) {
-// Trust always
-            }
-
-            public void checkServerTrusted(X509Certificate[] certs,
-                    String authType) {
-// Trust always
-            }
-        }};
-
-            // Install the all-trusting trust manager
-            SSLContext sc = SSLContext.getInstance("SSL");
-            // Create empty HostnameVerifier
-            HostnameVerifier hv = new HostnameVerifier() {
-                public boolean verify(String arg0, SSLSession arg1) {
-                    return true;
-                }
-            };
-
-            sc.init(null, trustAllCerts, new java.security.SecureRandom());
-            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-            HttpsURLConnection.setDefaultHostnameVerifier(hv);
+            Utils.sslHanshake();
             URL wordpresssite = new URL(this.websiteUrl + "/xmlrpc.php");
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
             config.setServerURL(wordpresssite);
@@ -189,10 +156,6 @@ public class WordPresslServicesClient {
                     break labelsearch;
                 }
             }
-        } catch (KeyManagementException ex) {
-            Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (XmlRpcException ex) {
             Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (MalformedURLException ex) {
@@ -207,34 +170,7 @@ public class WordPresslServicesClient {
         boolean created = false;
         //loadKeyStore();//CHANGE ME
         try {
-            TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
-            public X509Certificate[] getAcceptedIssuers() {
-                return null;
-            }
-
-            public void checkClientTrusted(X509Certificate[] certs,
-                    String authType) {
-// Trust always
-            }
-
-            public void checkServerTrusted(X509Certificate[] certs,
-                    String authType) {
-// Trust always
-            }
-        }};
-
-            // Install the all-trusting trust manager
-            SSLContext sc = SSLContext.getInstance("SSL");
-            // Create empty HostnameVerifier
-            HostnameVerifier hv = new HostnameVerifier() {
-                public boolean verify(String arg0, SSLSession arg1) {
-                    return true;
-                }
-            };
-
-            sc.init(null, trustAllCerts, new java.security.SecureRandom());
-            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-            HttpsURLConnection.setDefaultHostnameVerifier(hv);
+            Utils.sslHanshake();
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
             config.setServerURL(new URL(this.websiteUrl + "/xmlrpc.php"));
             config.setEnabledForExtensions(true);
@@ -250,10 +186,6 @@ public class WordPresslServicesClient {
             } else {
             }
 
-        } catch (KeyManagementException ex) {
-            Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (MalformedURLException ex) {
             Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (XmlRpcException ex) {
@@ -271,34 +203,7 @@ public class WordPresslServicesClient {
         String json;
         //loadKeyStore();//CHANGE ME
         try {
-            TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
-            public X509Certificate[] getAcceptedIssuers() {
-                return null;
-            }
-
-            public void checkClientTrusted(X509Certificate[] certs,
-                    String authType) {
-// Trust always
-            }
-
-            public void checkServerTrusted(X509Certificate[] certs,
-                    String authType) {
-// Trust always
-            }
-        }};
-
-            // Install the all-trusting trust manager
-            SSLContext sc = SSLContext.getInstance("SSL");
-            // Create empty HostnameVerifier
-            HostnameVerifier hv = new HostnameVerifier() {
-                public boolean verify(String arg0, SSLSession arg1) {
-                    return true;
-                }
-            };
-
-            sc.init(null, trustAllCerts, new java.security.SecureRandom());
-            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-            HttpsURLConnection.setDefaultHostnameVerifier(hv);
+            Utils.sslHanshake();
             XmlRpcClient wordpRpcClient;
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
             config.setServerURL(new URL(this.websiteUrl + "/xmlrpc.php"));
@@ -323,10 +228,6 @@ public class WordPresslServicesClient {
                     blog.setUserName(username);
                 }
             }
-        } catch (KeyManagementException ex) {
-            Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (MalformedURLException ex) {
             Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (XmlRpcException ex) {
@@ -341,35 +242,7 @@ public class WordPresslServicesClient {
         boolean edited = false;
         //loadKeyStore();//CHANGE ME
         try {
-
-            TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
-            public X509Certificate[] getAcceptedIssuers() {
-                return null;
-            }
-
-            public void checkClientTrusted(X509Certificate[] certs,
-                    String authType) {
-                // Trust always
-            }
-
-            public void checkServerTrusted(X509Certificate[] certs,
-                    String authType) {
-                // Trust always
-            }
-        }};
-
-            // Install the all-trusting trust manager
-            SSLContext sc = SSLContext.getInstance("SSL");
-            // Create empty HostnameVerifier
-            HostnameVerifier hv = new HostnameVerifier() {
-                public boolean verify(String arg0, SSLSession arg1) {
-                    return true;
-                }
-            };
-
-            sc.init(null, trustAllCerts, new java.security.SecureRandom());
-            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-            HttpsURLConnection.setDefaultHostnameVerifier(hv);
+            Utils.sslHanshake();
             URL wordpresssite = new URL(this.websiteUrl + "/xmlrpc.php");
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
             config.setServerURL(wordpresssite);
@@ -385,10 +258,6 @@ public class WordPresslServicesClient {
                 edited = true;
             }
 
-        } catch (KeyManagementException ex) {
-            Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (XmlRpcException ex) {
             Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (MalformedURLException ex) {
@@ -404,35 +273,7 @@ public class WordPresslServicesClient {
         PostInfo blog = null;
         //loadKeyStore();//CHANGE ME
         try {
-
-            TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
-            public X509Certificate[] getAcceptedIssuers() {
-                return null;
-            }
-
-            public void checkClientTrusted(X509Certificate[] certs,
-                    String authType) {
-// Trust always
-            }
-
-            public void checkServerTrusted(X509Certificate[] certs,
-                    String authType) {
-// Trust always
-            }
-        }};
-
-            // Install the all-trusting trust manager
-            SSLContext sc = SSLContext.getInstance("SSL");
-            // Create empty HostnameVerifier
-            HostnameVerifier hv = new HostnameVerifier() {
-                public boolean verify(String arg0, SSLSession arg1) {
-                    return true;
-                }
-            };
-
-            sc.init(null, trustAllCerts, new java.security.SecureRandom());
-            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-            HttpsURLConnection.setDefaultHostnameVerifier(hv);
+            Utils.sslHanshake();
             URL wordpresssite = new URL(this.websiteUrl + "/xmlrpc.php");
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
             config.setServerURL(wordpresssite);
@@ -448,10 +289,6 @@ public class WordPresslServicesClient {
                 deleted = true;
             }
 
-        } catch (KeyManagementException ex) {
-            Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (XmlRpcException ex) {
             Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (MalformedURLException ex) {
@@ -474,34 +311,7 @@ public class WordPresslServicesClient {
         String fileId;
         //loadKeyStore();//CHANGE ME
         try {
-            TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
-            public X509Certificate[] getAcceptedIssuers() {
-                return null;
-            }
-
-            public void checkClientTrusted(X509Certificate[] certs,
-                    String authType) {
-// Trust always
-            }
-
-            public void checkServerTrusted(X509Certificate[] certs,
-                    String authType) {
-// Trust always
-            }
-        }};
-
-            // Install the all-trusting trust manager
-            SSLContext sc = SSLContext.getInstance("SSL");
-            // Create empty HostnameVerifier
-            HostnameVerifier hv = new HostnameVerifier() {
-                public boolean verify(String arg0, SSLSession arg1) {
-                    return true;
-                }
-            };
-
-            sc.init(null, trustAllCerts, new java.security.SecureRandom());
-            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-            HttpsURLConnection.setDefaultHostnameVerifier(hv);
+            Utils.sslHanshake();
 
             worRpcClientclient = getXmlRpcClient();
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
@@ -561,10 +371,6 @@ public class WordPresslServicesClient {
             }
             LOG.log(Level.FINER, "Attach file response: {0}", uploadResult.toString());
 
-        } catch (KeyManagementException ex) {
-            Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (XmlRpcException ex) {
             Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
@@ -584,34 +390,7 @@ public class WordPresslServicesClient {
 
         //
         try {
-            TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
-            public X509Certificate[] getAcceptedIssuers() {
-                return null;
-            }
-
-            public void checkClientTrusted(X509Certificate[] certs,
-                    String authType) {
-// Trust always
-            }
-
-            public void checkServerTrusted(X509Certificate[] certs,
-                    String authType) {
-// Trust always
-            }
-        }};
-
-            // Install the all-trusting trust manager
-            SSLContext sc = SSLContext.getInstance("SSL");
-            // Create empty HostnameVerifier
-            HostnameVerifier hv = new HostnameVerifier() {
-                public boolean verify(String arg0, SSLSession arg1) {
-                    return true;
-                }
-            };
-
-            sc.init(null, trustAllCerts, new java.security.SecureRandom());
-            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-            HttpsURLConnection.setDefaultHostnameVerifier(hv);
+            Utils.sslHanshake();
 
             int i = 0;
             XmlRpcClient worRpcClientclient;
@@ -654,10 +433,6 @@ public class WordPresslServicesClient {
                 }
             }
             LOG.log(Level.FINER, "Attach file response: {0}", result);
-        } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (KeyManagementException ex) {
-            Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (XmlRpcException ex) {
             Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
@@ -695,12 +470,7 @@ public class WordPresslServicesClient {
                 }
             };
             HttpsURLConnection.setDefaultHostnameVerifier(hv);
-//            Vector params = new Vector();
-//            params.addElement(new String("username"));
-//            params.addElement(new String("password"));
-//            params.addElement(new String("!MASK!abcdefghij1234567890klmnopqrst!MASK!"));
-            //  Object result = client.execute("ccdata.unmask", params);
-            //  System.out.println("The returned values are: " + result);
+
         } catch (KeyManagementException ex) {
             Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (UnrecoverableKeyException ex) {
