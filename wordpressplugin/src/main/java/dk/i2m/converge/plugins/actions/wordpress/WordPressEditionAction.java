@@ -29,6 +29,7 @@ import dk.i2m.converge.core.plugin.EditionAction;
 import dk.i2m.converge.core.plugin.PluginContext;
 import dk.i2m.converge.core.workflow.Edition;
 import dk.i2m.converge.core.workflow.OutletEditionAction;
+import dk.i2m.converge.core.workflow.Section;
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -91,7 +92,7 @@ public class WordPressEditionAction implements EditionAction {
     private static final String STATUS_LABEL = "status";
     private ResourceBundle bundle = ResourceBundle.getBundle("dk.i2m.converge.plugins.wordpress.Messages");
     private Map<String, String> availableProperties;
-    private Map<Long, Long> sectionMapping;
+    private Map<Long, String> sectionMapping;
     private DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private String publishDelay;
     private String publishImmediately;
@@ -129,7 +130,6 @@ public class WordPressEditionAction implements EditionAction {
         this.connectionTimeout = properties.get(Property.CONNECTION_TIMEOUT.name());
         this.socketTimeout = properties.get(Property.SOCKET_TIMEOUT.name());
         this.website = properties.get(Property.SITE_URL.name());
-
 
         if (tag == null) {
             tag = "";
@@ -222,14 +222,21 @@ public class WordPressEditionAction implements EditionAction {
 //            return;
 //        }
         List<FileInfo> mediaItems = getMediaItems(newsItem);
-
+//
         if (update == false) { //tessting to not considering the update to fix l there has to be a acheck so that the item is not repulbished this pice should be removed
             try {
-                post = new HashMap<String, String>(); //Replace all Below with Converge ones
+                post = new HashMap<Object, Object>(); //Replace all Below with Converge ones
+                String tags = newsItem.getBrief();
+                int index = tags.indexOf("#");
+                int lastindex = tags.lastIndexOf("#");
+                String[] categories = category.split(",");
+                //Categories Picking
 
-                post.put("mt_keywords", keywords);
-                post.put("categories", category);
-                post.put("post_category", category);
+                //post.put("mt_keywords", keywords);
+                post.put("mt_keywords", tags.substring(index + 1, lastindex).replaceAll("#", ","));
+//                post.put("categories", new String[]{"mandia", "karige"});
+                post.put("categories", category.split(","));
+                post.put("post_category", category.split(","));
                 post.put("post_content", newsItem.getStory());
                 post.put("post_excerpt", newsItem.getBrief());
                 post.put("post_status", "publish");
@@ -281,11 +288,13 @@ public class WordPressEditionAction implements EditionAction {
             NewsItemEditionState nid = ctx.addNewsItemEditionState(edition.getId(), newsItem.getId(), NID_LABEL, null);
             NewsItemEditionState uri = ctx.addNewsItemEditionState(edition.getId(), newsItem.getId(), URI_LABEL, null);
             NewsItemEditionState submitted = ctx.addNewsItemEditionState(edition.getId(), newsItem.getId(), DATE, null);
+            String[] categories = category.split(",");
 
             try {
-                post = new HashMap<String, String>();
+                post = new HashMap<Object, Object>();
                 post.put("mt_keywords", keywords);
-                post.put("categories", category);
+                post.put("categoies", category.split(","));//categories//categories
+                post.put("post_category", category.split(","));
                 post.put("post_content", newsItem.getStory());
                 post.put("post_excerpt", newsItem.getBrief());
                 post.put("post_status", "publish");
@@ -296,7 +305,7 @@ public class WordPressEditionAction implements EditionAction {
                 post.put("link", "http://www.dst.org/");
                 post.put("description", newsItem.getStory());
                 Object[] params = new Object[]{postId, this.username, this.password, post, Boolean.TRUE}; //to instantiate using the other Constructor
-                String[] ids = {};
+                String[] ids = {};//The Id that has to be update into the,
                 if (mediaItems.isEmpty()) {
                     this.wordPressServiceClient.createNewPost(params);
                 } else {
@@ -318,9 +327,7 @@ public class WordPressEditionAction implements EditionAction {
                         post.put("featured_image_url", paramz.get("url"));
                         this.wordPressServiceClient.createNewPost(params);
                     }
-
                 }
-
             } catch (WordPressServerConnectionException ex) {
                 this.errors++;
                 status.setValue(FAILED.toString());
@@ -477,6 +484,32 @@ public class WordPressEditionAction implements EditionAction {
                 return newsItem.getByLine();
             }
         }
+    }
+
+    private String getSection(NewsItemPlacement nip) throws UnmappedSectionException {
+        Section section = nip.getSection();
+
+        if (section != null) {
+            if (sectionMapping.containsKey(section.getId())) {
+                return sectionMapping.get(section.getId()).toString();
+            }
+        }
+
+        throw new UnmappedSectionException(section + " is not mapped");
+    }
+
+    private void setSectionMapping(String mapping) {
+        String[] values = mapping.split(";");
+
+        for (int i = 0; i < values.length; i++) {
+            String[] value = values[i].split(":");
+            Long convergeId = Long.valueOf(value[0].trim());
+            String wordpressCategory = String.valueOf(value[1].trim());
+            sectionMapping.put(convergeId, wordpressCategory);
+            LOG.log(Level.INFO, "Mapping Converge Section #{0} to Wordpress Section #{1}", new Object[]{convergeId, wordpressCategory});
+        }
+
+        LOG.log(Level.INFO, "Found {0} Section mapping(s)", sectionMapping.size());
     }
 
     private boolean isInteger(String input) {
