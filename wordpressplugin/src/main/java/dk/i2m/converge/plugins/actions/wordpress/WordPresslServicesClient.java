@@ -164,12 +164,16 @@ public class WordPresslServicesClient {
         return exists;
     }
 
-    public boolean createNewPost(Object[] itemsPostParams) {
-        String result;
-        XmlRpcClient wordpRpcClient;
-        boolean created = false;
-        //loadKeyStore();//CHANGE ME
+    public String createNewPost(Object[] itemsPostParams) {
+
+        String result = "";
         try {
+            Map<String, String> resultstr = null;
+            XmlRpcClient wordpRpcClient;
+            boolean created = false;
+            //loadKeyStore();//CHANGE ME
+
+            resultstr = new HashMap<String, String>();
             Utils.sslHanshake();
             XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
             config.setServerURL(new URL(this.websiteUrl + "/xmlrpc.php"));
@@ -180,18 +184,26 @@ public class WordPresslServicesClient {
             wordpRpcClient = getXmlRpcClient();
             wordpRpcClient.setConfig(config);
             result = (String) wordpRpcClient.execute("metaWeblog.newPost", itemsPostParams);//wp.newPost//metaWeblog.newPost
-            System.out.println(result);
+            System.out.println(result + "@@@@@@@@@@@@@@@@@@@@@@@@@");
+            //    {"postid":"1092","wp_post_thumbnail":"1091","mt_allow_comments":1,"permaLink":"http://localhost:8282/wordpress/?p\u003d1092","post_status":"publish","link":"http://localhost:8282/wordpress/?p\u003d1092","mt_text_more":"","userid":"1","mt_allow_pings":1,"mt_keywords":"testkey3, testkeyword","title":"Another Updated Title from Converge, From Converge","date_modified_gmt":"Sep 10, 2014 6:48:09 AM","wp_more_text":"","description":"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\u0027s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.","wp_password":"","wp_author_display_name":"admin","custom_fields":[],"date_modified":"Sep 10, 2014 6:48:09 AM","mt_excerpt":"","wp_post_format":"standard","sticky":false,"date_created_gmt":"Sep 10, 2014 6:48:09 AM","dateCreated":"Sep 10, 2014 6:48:09 AM","categories":["Uncategorized"],"wp_slug":"another-updated-title-from-converge-from-converge-92","wp_author_id":"1"} 6
+            resultstr.put("post_id", result);
+            resultstr.put("created", true + "");
+            resultstr.put("postid", result);
             if (Integer.parseInt(result) != 0) {
                 created = true;
+                resultstr.put("post_id", result);
+                resultstr.put("created", true + "");
+                //return result;
             } else {
             }
-
+            return result;
         } catch (MalformedURLException ex) {
             Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (XmlRpcException ex) {
             Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return created;
+        return result;
+
     }
 
     public PostInfo retrieveExistingPost(int blogId) throws IOException {
@@ -351,6 +363,190 @@ public class WordPresslServicesClient {
                     isId = Utils.isInteger(fileId);
                     resultMap.put("boolean", isId + "");
                     resultMap.put("id", fileId);
+                    resultMap.put("url", jsonObject.get("url").toString());
+                    resultMap.put("type", fileInfo.getFile().getName().substring(fileInfo.getFile().getName().lastIndexOf(".") + 1));
+                }
+            } else {
+                if (jsonElement.isJsonObject()) {
+                    FileInfo file = new FileInfo(null, json);
+                    jsonObject = jsonElement.getAsJsonObject();
+                    //{"id":"453","file":"3.png","type":"png","url":"http://localhost:8282/wordpress/wp-content/uploads/2014/08/352.png"}
+                    System.out.println(jsonObject.get("file"));
+                    result = jsonObject.get("file").toString().replace("\"", ""); //More logic needed here
+                    fileId = jsonObject.get("id").toString().replace("\"", "");
+                    isId = Utils.isInteger(fileId);
+                    resultMap.put("boolean", isId + "");
+                    resultMap.put("id", fileId);
+                    resultMap.put("url", jsonObject.get("url").toString());
+                    resultMap.put("type", fileInfo.getFile().getName().substring(fileInfo.getFile().getName().lastIndexOf(".") + 1));
+
+
+                }
+            }
+            LOG.log(Level.FINER, "Attach file response: {0}", uploadResult.toString());
+
+        } catch (XmlRpcException ex) {
+            Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            throw new WordPressServerConnectionException("Could not attach files.", ex);
+        }
+        return resultMap;
+    }
+
+    public Map<String, String> attachVideoFileToPost(FileInfo fileInfo, int blogId) throws WordPressServerConnectionException {
+        XmlRpcClient worRpcClientclient;
+        String result = "";
+        Gson gson = new Gson();
+        JsonObject jsonObject;
+        JsonParser jsonParser = new JsonParser();
+        String json;
+        HashMap<String, String> resultstr;
+        HashMap<String, String> resultMap = new HashMap<String, String>();
+
+        boolean isId = false;
+        String fileId;
+        //loadKeyStore();//CHANGE ME
+
+        try {
+            Utils.sslHanshake();
+
+            worRpcClientclient = getXmlRpcClient();
+            XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+            config.setServerURL(new URL(this.websiteUrl + "/xmlrpc.php"));
+            config.setEnabledForExtensions(true);
+            config.setEnabledForExceptions(true);
+            config.setConnectionTimeout(connectionTimeout);
+            config.setConnectionTimeout(this.replyTimeOut);
+            worRpcClientclient.setConfig(config);
+            //File file = fileInfo.getFile();
+            byte[] bytes = new byte[(int) fileInfo.getFile().length()];
+            FileInputStream fin = new FileInputStream(fileInfo.getFile());
+            fin.read(bytes);
+            fin.close();
+
+            Map<Object, Object> fileData = new HashMap<Object, Object>();
+            fileData.put("name", fileInfo.getFile().getName());
+//          fileData.put("type", "video/" + fileInfo.getFile().getName().substring(fileInfo.getFile().getName().lastIndexOf(".") + 1));
+            fileData.put("type", "video/" + fileInfo.getFile().getName().substring(fileInfo.getFile().getName().lastIndexOf(".") + 1));
+
+            System.out.println(fileInfo.getFile().getName().substring(fileInfo.getFile().getName().lastIndexOf(".") + 1));
+            fileData.put("bits", bytes);
+            //fileData.put("post_id", blogId);
+            fileData.put("overwrite", Boolean.TRUE);
+
+            Object[] params = new Object[]{blogId, username, password, fileData};//wp.uploadFile//wp.uploadFile
+            //Object uploadResult = worRpcClientclient.execute("mw_newMediaObject", params);//newMediaObject//metaWeblog.newMediaObject//metaWeblog.newMediaObject
+
+//            Object uploadResult = worRpcClientclient.execute("metaWeblog.newMediaObject", params);
+            Object uploadResult = worRpcClientclient.execute("wp.uploadFile", params);
+            System.out.println(uploadResult + "::::::::::::::::::::::");
+            result = uploadResult.toString();//metaWeblog.uploadFile
+            resultstr = (HashMap<String, String>) uploadResult;
+            json = gson.toJson(uploadResult);
+            JsonElement jsonElement = jsonParser.parse(json);
+            if (jsonElement.isJsonNull()) {
+                uploadResult = worRpcClientclient.execute("wp.uploadFile", params);
+                if (jsonElement.isJsonObject()) {
+                    FileInfo file = new FileInfo(null, json);
+                    jsonObject = jsonElement.getAsJsonObject();
+                    //{"id":"453","file":"3.png","type":"png","url":"http://localhost:8282/wordpress/wp-content/uploads/2014/08/352.png"}
+                    System.out.println(jsonObject.get("file"));
+                    result = jsonObject.get("file").toString().replace("\"", ""); //More logic needed here
+                    fileId = jsonObject.get("id").toString().replace("\"", "");
+                    isId = Utils.isInteger(fileId);
+                    resultMap.put("boolean", isId + "");
+                    resultMap.put("id", fileId);
+                    resultMap.put("url", jsonObject.get("url").toString());
+                    resultMap.put("type", fileInfo.getFile().getName().substring(fileInfo.getFile().getName().lastIndexOf(".") + 1));
+                }
+            } else {
+                if (jsonElement.isJsonObject()) {
+                    FileInfo file = new FileInfo(null, json);
+                    jsonObject = jsonElement.getAsJsonObject();
+                    //{"id":"453","file":"3.png","type":"png","url":"http://localhost:8282/wordpress/wp-content/uploads/2014/08/352.png"}
+                    System.out.println(jsonObject.get("file"));
+                    result = jsonObject.get("file").toString().replace("\"", ""); //More logic needed here
+                    fileId = jsonObject.get("id").toString().replace("\"", "");
+                    isId = Utils.isInteger(fileId);
+                    resultMap.put("boolean", isId + "");
+                    resultMap.put("id", fileId);
+                    resultMap.put("url", jsonObject.get("url").toString());
+                    resultMap.put("type", fileInfo.getFile().getName().substring(fileInfo.getFile().getName().lastIndexOf(".") + 1));
+
+
+                }
+            }
+            LOG.log(Level.FINER, "Attach file response: {0}", uploadResult.toString());
+
+        } catch (XmlRpcException ex) {
+            Logger.getLogger(WordPresslServicesClient.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            throw new WordPressServerConnectionException("Could not attach files.", ex);
+        }
+        return resultMap;
+    }
+
+    public Map<String, String> attachMp3FileToPost(FileInfo fileInfo, int blogId) throws WordPressServerConnectionException {
+        XmlRpcClient worRpcClientclient;
+        String result = "";
+        Gson gson = new Gson();
+        JsonObject jsonObject;
+        JsonParser jsonParser = new JsonParser();
+        String json;
+        HashMap<String, String> resultstr;
+        HashMap<String, String> resultMap = new HashMap<String, String>();
+
+        boolean isId = false;
+        String fileId;
+        //loadKeyStore();//CHANGE ME
+
+        try {
+            Utils.sslHanshake();
+
+            worRpcClientclient = getXmlRpcClient();
+            XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+            config.setServerURL(new URL(this.websiteUrl + "/xmlrpc.php"));
+            config.setEnabledForExtensions(true);
+            config.setEnabledForExceptions(true);
+            config.setConnectionTimeout(connectionTimeout);
+            config.setConnectionTimeout(this.replyTimeOut);
+            worRpcClientclient.setConfig(config);
+            //File file = fileInfo.getFile();
+            byte[] bytes = new byte[(int) fileInfo.getFile().length()];
+            FileInputStream fin = new FileInputStream(fileInfo.getFile());
+            fin.read(bytes);
+            fin.close();
+
+            Map<Object, Object> fileData = new HashMap<Object, Object>();
+            fileData.put("name", fileInfo.getFile().getName());
+//          fileData.put("type", "video/" + fileInfo.getFile().getName().substring(fileInfo.getFile().getName().lastIndexOf(".") + 1));
+            fileData.put("type", "audio/" + fileInfo.getFile().getName().substring(fileInfo.getFile().getName().lastIndexOf(".") + 1));
+
+            System.out.println(fileInfo.getFile().getName().substring(fileInfo.getFile().getName().lastIndexOf(".") + 1));
+            fileData.put("bits", bytes);
+            fileData.put("overwrite", Boolean.FALSE);
+            Object[] params = new Object[]{blogId, username, password, fileData};//wp.uploadFile//wp.uploadFile
+            //Object uploadResult = worRpcClientclient.execute("mw_newMediaObject", params);//newMediaObject//metaWeblog.newMediaObject//metaWeblog.newMediaObject
+            Object uploadResult = worRpcClientclient.execute("metaWeblog.newMediaObject", params);
+            System.out.println(uploadResult + ">>>>>>>>>>>>>>>>>>>>>>>>>.");
+            result = uploadResult.toString();//metaWeblog.uploadFile
+            resultstr = (HashMap<String, String>) uploadResult;
+            json = gson.toJson(uploadResult);
+            JsonElement jsonElement = jsonParser.parse(json);
+            if (jsonElement.isJsonNull()) {
+                uploadResult = worRpcClientclient.execute("metaWeblog.newMediaObject", params);
+                if (jsonElement.isJsonObject()) {
+                    FileInfo file = new FileInfo(null, json);
+                    jsonObject = jsonElement.getAsJsonObject();
+                    //{"id":"453","file":"3.png","type":"png","url":"http://localhost:8282/wordpress/wp-content/uploads/2014/08/352.png"}
+                    //"[audio mp3=\"https://radioafricaplatforms.com/apps/converge/wp-content/uploads/2014/09/3.mp3\"][/audio]");
+                    System.out.println(jsonObject.get("file"));
+                    result = jsonObject.get("file").toString().replace("\"", ""); //More logic needed here
+                    fileId = jsonObject.get("id").toString().replace("\"", "");
+                    isId = Utils.isInteger(fileId);
+                    resultMap.put("boolean", isId + "");
+                    resultMap.put("id", fileId);
+                    resultMap.put("type", fileInfo.getFile().getName().substring(fileInfo.getFile().getName().lastIndexOf(".") + 1));
                     resultMap.put("url", jsonObject.get("url").toString());
 
                 }
