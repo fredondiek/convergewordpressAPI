@@ -29,6 +29,7 @@ import dk.i2m.converge.core.plugin.EditionAction;
 import dk.i2m.converge.core.plugin.PluginContext;
 import dk.i2m.converge.core.workflow.Edition;
 import dk.i2m.converge.core.workflow.OutletEditionAction;
+import dk.i2m.converge.core.workflow.OutletEditionActionProperty;
 import dk.i2m.converge.core.workflow.Section;
 import java.io.File;
 import java.text.DateFormat;
@@ -75,6 +76,7 @@ public class WordPressEditionAction implements EditionAction {
         POSTID,
         POST_STATUS,
         ALLOW_COMMENTS,
+        SECTION_MAPPING,
         KEYWORDS,
         CATEGORIES,
         CUSTOME_FIELDS,
@@ -112,9 +114,18 @@ public class WordPressEditionAction implements EditionAction {
     private String keywords;
 
     private void init(OutletEditionAction action) {
-
         Map<String, String> properties = action.getPropertiesAsMap();
         StringBuilder mapBuilder = new StringBuilder();
+
+        for (OutletEditionActionProperty actionProperty : action.getProperties()) {
+            if (actionProperty.getKey().equalsIgnoreCase(Property.SECTION_MAPPING.name())) {
+                if (mapBuilder.length() > 0) {
+                    mapBuilder.append(",");
+                }
+                mapBuilder.append(actionProperty.getValue());
+            }
+        }
+        sectionMapping = new HashMap<Long, String>();
         mappings = mapBuilder.toString();
         publishDelay = properties.get(Property.PUBLISH_DELAY.name());
         publishImmediately = properties.get(Property.PUBLISH_IMMEDIATELY.name());
@@ -165,7 +176,7 @@ public class WordPressEditionAction implements EditionAction {
         } else if (!isInteger(socketTimeout)) {
             throw new IllegalArgumentException("'socketTimeout' must be an integer");
         }
-
+        setSectionMapping(mappings);
 //        this.wordPressServiceClient = new WordPresslServicesClient(hostname, endpoint, username, password, Integer.valueOf(socketTimeout), Integer.valueOf(connectionTimeout));
         this.wordPressServiceClient = new WordPresslServicesClient(website, username, password, connectionTimeout);
 
@@ -202,10 +213,16 @@ public class WordPressEditionAction implements EditionAction {
         Edition edition = nip.getEdition();
         NewsItem newsItem = nip.getNewsItem();
         Map<String, String> paramz = null;
+        String section = "";
         // Ignore NewsItem if it hasn't reached the end state of the workflow
 
         if (!newsItem.isEndState()) {
             return;
+        }
+        try {
+            section = getSection(nip);
+        } catch (UnmappedSectionException ex) {
+            Logger.getLogger(WordPressEditionAction.class.getName()).log(Level.SEVERE, null, ex);
         }
         boolean update = false;
 //        try {
@@ -232,11 +249,18 @@ public class WordPressEditionAction implements EditionAction {
                 String[] categories = category.split(",");
                 //Categories Picking
 
+                String tagged = "";
+                if (tags.equalsIgnoreCase("") || tags.length() == 0) {
+                } else {
+                    tagged = tags.substring(index + 1, lastindex).replaceAll("#", ",");
+                }
                 //post.put("mt_keywords", keywords);
-                post.put("mt_keywords", tags.substring(index + 1, lastindex).replaceAll("#", ","));
+                post.put("mt_keywords", tagged);
 //                post.put("categories", new String[]{"mandia", "karige"});
-                post.put("categories", category.split(","));
-                post.put("post_category", category.split(","));
+//                post.put("categories", category.split(","));
+//                post.put("post_category", category.split(","));
+                post.put("categoies", section);//categories//categories
+                post.put("post_category", section);
                 post.put("post_content", newsItem.getStory());
                 post.put("post_excerpt", newsItem.getBrief());
                 post.put("post_status", "publish");
@@ -256,22 +280,51 @@ public class WordPressEditionAction implements EditionAction {
                     this.wordPressServiceClient.createNewPost(params);
                 } else {
                     if (mediaItems.size() == 1) {
-                        paramz = wordPressServiceClient.attachFileToPost(mediaItems.get(0), Integer.parseInt(postId));
-                        post.put("wp_post_thumbnail", paramz.get("id"));
-//                        post.put("wp_post_thumbnail", paramz.get("id"));
-                        post.put("featured_image_url", paramz.get("url"));
-                        post.put("wp_featured_image", paramz.get("id"));//wp_featured_image
-                        this.wordPressServiceClient.createNewPost(params);
+
+                        if (mediaItems.get(0).getFile().getName().substring(mediaItems.get(0).getFile().getName().lastIndexOf(".") + 1).equalsIgnoreCase("png") || mediaItems.get(0).getFile().getName().substring(mediaItems.get(0).getFile().getName().lastIndexOf(".") + 1).equalsIgnoreCase("jpg") || mediaItems.get(0).getFile().getName().substring(mediaItems.get(0).getFile().getName().lastIndexOf(".") + 1).equalsIgnoreCase("jpeg") || mediaItems.get(0).getFile().getName().substring(mediaItems.get(0).getFile().getName().lastIndexOf(".") + 1).equalsIgnoreCase("gif") || mediaItems.get(0).getFile().getName().substring(mediaItems.get(0).getFile().getName().lastIndexOf(".") + 1).equalsIgnoreCase("tiff")) {
+                            paramz = wordPressServiceClient.attachFileToPost(mediaItems.get(0), Integer.parseInt(postId));
+                            post.put("wp_post_thumbnail", paramz.get("id"));
+                            post.put("featured_image_url", paramz.get("url"));
+                            post.put("wp_featured_image", paramz.get("id"));
+                            this.wordPressServiceClient.createNewPost(params);
+                        } else {
+                            if (mediaItems.get(0).getFile().getName().substring(mediaItems.get(0).getFile().getName().lastIndexOf(".") + 1).equalsIgnoreCase("mp3")) {
+                                paramz = wordPressServiceClient.attachMp3FileToPost(mediaItems.get(0), Integer.parseInt(postId));
+                                post.put("description", newsItem.getStory() + "[audio " + paramz.get("type") + "=" + paramz.get("url") + "][/audio]");
+                                this.wordPressServiceClient.createNewPost(params);
+                            } else {
+                                paramz = wordPressServiceClient.attachVideoFileToPost(mediaItems.get(0), Integer.parseInt(postId));
+                                post.put("description", newsItem.getStory() + "[video " + paramz.get("type") + "=" + paramz.get("url") + "][/video]");
+                                this.wordPressServiceClient.createNewPost(params);
+                            }
+
+                        }
+
                     } else if (mediaItems.size() > 1) {
                         for (int i = 0; i < mediaItems.size(); i++) {//fix this
                             paramz = wordPressServiceClient.attachFileToPost(mediaItems.get(i), Integer.parseInt(postId));
                             ids[i] = paramz.get("id");
                         }
-                        post.put("wp_post_thumbnail", paramz.get("id"));
-//                        post.put("wp_post_thumbnail", ids[0]);
-                        post.put("wp_featured_image", paramz.get("id"));
-                        post.put("featured_image_url", paramz.get("url"));
-                        this.wordPressServiceClient.createNewPost(params);
+//FIx needed
+
+                        if (mediaItems.get(0).getFile().getName().substring(mediaItems.get(0).getFile().getName().lastIndexOf(".") + 1).equalsIgnoreCase("png") || mediaItems.get(0).getFile().getName().substring(mediaItems.get(0).getFile().getName().lastIndexOf(".") + 1).equalsIgnoreCase("jpg") || mediaItems.get(0).getFile().getName().substring(mediaItems.get(0).getFile().getName().lastIndexOf(".") + 1).equalsIgnoreCase("jpeg") || mediaItems.get(0).getFile().getName().substring(mediaItems.get(0).getFile().getName().lastIndexOf(".") + 1).equalsIgnoreCase("gif") || mediaItems.get(0).getFile().getName().substring(mediaItems.get(0).getFile().getName().lastIndexOf(".") + 1).equalsIgnoreCase("tiff")) {
+                            paramz = wordPressServiceClient.attachFileToPost(mediaItems.get(0), Integer.parseInt(postId));
+                            post.put("wp_post_thumbnail", paramz.get("id"));
+                            post.put("featured_image_url", paramz.get("url"));
+                            post.put("wp_featured_image", paramz.get("id"));
+                            this.wordPressServiceClient.createNewPost(params);
+                        } else {
+                            if (mediaItems.get(0).getFile().getName().substring(mediaItems.get(0).getFile().getName().lastIndexOf(".") + 1).equalsIgnoreCase("mp3")) {
+                                paramz = wordPressServiceClient.attachMp3FileToPost(mediaItems.get(0), Integer.parseInt(postId));
+                                post.put("description", newsItem.getStory() + "[audio " + paramz.get("type") + "=" + paramz.get("url") + "][/audio]");
+                                this.wordPressServiceClient.createNewPost(params);
+                            } else {
+                                paramz = wordPressServiceClient.attachVideoFileToPost(mediaItems.get(0), Integer.parseInt(postId));
+                                post.put("description", newsItem.getStory() + "[video " + paramz.get("type") + "=" + paramz.get("url") + "][/video]");
+                                this.wordPressServiceClient.createNewPost(params);
+                            }
+
+                        }
 
                     }
 
@@ -289,12 +342,22 @@ public class WordPressEditionAction implements EditionAction {
             NewsItemEditionState uri = ctx.addNewsItemEditionState(edition.getId(), newsItem.getId(), URI_LABEL, null);
             NewsItemEditionState submitted = ctx.addNewsItemEditionState(edition.getId(), newsItem.getId(), DATE, null);
             String[] categories = category.split(",");
-
+//mappings
+            String tags = newsItem.getBrief();
             try {
+                int index = tags.indexOf("#");
+                int lastindex = tags.lastIndexOf("#");
+                String tagged = "";
+                if (tags.equalsIgnoreCase("") || tags.length() == 0) {
+                } else {
+                    tagged = tags.substring(index + 1, lastindex).replaceAll("#", ",");
+                }
                 post = new HashMap<Object, Object>();
-                post.put("mt_keywords", keywords);
-                post.put("categoies", category.split(","));//categories//categories
-                post.put("post_category", category.split(","));
+                post.put("mt_keywords", tagged);
+//              post.put("categoies", categkeywordsory.split(","));//categories//categories
+//              post.put("post_category", category.split(","));
+                post.put("categoies", section);//categories//categories
+                post.put("post_category", section);
                 post.put("post_content", newsItem.getStory());
                 post.put("post_excerpt", newsItem.getBrief());
                 post.put("post_status", "publish");
@@ -310,22 +373,49 @@ public class WordPressEditionAction implements EditionAction {
                     this.wordPressServiceClient.createNewPost(params);
                 } else {
                     if (mediaItems.size() == 1) {
-                        paramz = wordPressServiceClient.attachFileToPost(mediaItems.get(0), Integer.parseInt(postId));
-                        post.put("wp_post_thumbnail", paramz.get("id"));
-                        //post.put("wp_post_thumbnail", ids[0]);
-                        post.put("wp_featured_image", paramz.get("id"));
-                        post.put("featured_image_url", paramz.get("url"));
-                        this.wordPressServiceClient.createNewPost(params);
+                        if (mediaItems.get(0).getFile().getName().substring(mediaItems.get(0).getFile().getName().lastIndexOf(".") + 1).equalsIgnoreCase("png") || mediaItems.get(0).getFile().getName().substring(mediaItems.get(0).getFile().getName().lastIndexOf(".") + 1).equalsIgnoreCase("jpg") || mediaItems.get(0).getFile().getName().substring(mediaItems.get(0).getFile().getName().lastIndexOf(".") + 1).equalsIgnoreCase("jpeg") || mediaItems.get(0).getFile().getName().substring(mediaItems.get(0).getFile().getName().lastIndexOf(".") + 1).equalsIgnoreCase("gif") || mediaItems.get(0).getFile().getName().substring(mediaItems.get(0).getFile().getName().lastIndexOf(".") + 1).equalsIgnoreCase("tiff")) {
+                            paramz = wordPressServiceClient.attachFileToPost(mediaItems.get(0), Integer.parseInt(postId));
+                            post.put("wp_post_thumbnail", paramz.get("id"));
+                            post.put("featured_image_url", paramz.get("url"));
+                            post.put("wp_featured_image", paramz.get("id"));
+                            this.wordPressServiceClient.createNewPost(params);
+                        } else {
+                            if (mediaItems.get(0).getFile().getName().substring(mediaItems.get(0).getFile().getName().lastIndexOf(".") + 1).equalsIgnoreCase("mp3")) {
+                                paramz = wordPressServiceClient.attachMp3FileToPost(mediaItems.get(0), Integer.parseInt(postId));
+                                post.put("description", newsItem.getStory() + "[audio " + paramz.get("type") + "=" + paramz.get("url") + "][/audio]");
+                                this.wordPressServiceClient.createNewPost(params);
+                            } else {
+                                paramz = wordPressServiceClient.attachVideoFileToPost(mediaItems.get(0), Integer.parseInt(postId));
+                                post.put("description", newsItem.getStory() + "[video " + paramz.get("type") + "=" + paramz.get("url") + "][/video]");
+                                this.wordPressServiceClient.createNewPost(params);
+                            }
+
+                        }
                     } else if (mediaItems.size() > 1) {
-                        for (int i = 0; i < mediaItems.size(); i++) {
+                        for (int i = 0; i < mediaItems.size(); i++) {//fix this
                             paramz = wordPressServiceClient.attachFileToPost(mediaItems.get(i), Integer.parseInt(postId));
                             ids[i] = paramz.get("id");
                         }
-                        post.put("wp_post_thumbnail", paramz.get("id"));
-//                        post.put("wp_post_thumbnail", ids[0]);
-                        post.put("wp_featured_image", paramz.get("id"));
-                        post.put("featured_image_url", paramz.get("url"));
-                        this.wordPressServiceClient.createNewPost(params);
+//FIx needed
+
+                        if (mediaItems.get(0).getFile().getName().substring(mediaItems.get(0).getFile().getName().lastIndexOf(".") + 1).equalsIgnoreCase("png") || mediaItems.get(0).getFile().getName().substring(mediaItems.get(0).getFile().getName().lastIndexOf(".") + 1).equalsIgnoreCase("jpg") || mediaItems.get(0).getFile().getName().substring(mediaItems.get(0).getFile().getName().lastIndexOf(".") + 1).equalsIgnoreCase("jpeg") || mediaItems.get(0).getFile().getName().substring(mediaItems.get(0).getFile().getName().lastIndexOf(".") + 1).equalsIgnoreCase("gif") || mediaItems.get(0).getFile().getName().substring(mediaItems.get(0).getFile().getName().lastIndexOf(".") + 1).equalsIgnoreCase("tiff")) {
+                            paramz = wordPressServiceClient.attachFileToPost(mediaItems.get(0), Integer.parseInt(postId));
+                            post.put("wp_post_thumbnail", paramz.get("id"));
+                            post.put("featured_image_url", paramz.get("url"));
+                            post.put("wp_featured_image", paramz.get("id"));
+                            this.wordPressServiceClient.createNewPost(params);
+                        } else {
+                            if (mediaItems.get(0).getFile().getName().substring(mediaItems.get(0).getFile().getName().lastIndexOf(".") + 1).equalsIgnoreCase("mp3")) {
+                                paramz = wordPressServiceClient.attachMp3FileToPost(mediaItems.get(0), Integer.parseInt(postId));
+                                post.put("description", newsItem.getStory() + "[audio " + paramz.get("type") + "=" + paramz.get("url") + "][/audio]");
+                                this.wordPressServiceClient.createNewPost(params);
+                            } else {
+                                paramz = wordPressServiceClient.attachVideoFileToPost(mediaItems.get(0), Integer.parseInt(postId));
+                                post.put("description", newsItem.getStory() + "[video " + paramz.get("type") + "=" + paramz.get("url") + "][/video]");
+                                this.wordPressServiceClient.createNewPost(params);
+                            }
+
+                        }
                     }
                 }
             } catch (WordPressServerConnectionException ex) {
