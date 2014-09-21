@@ -74,4 +74,15 @@ public class Utils {
             Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+    
+    public static String flattenArray(String[] array){
+           StringBuilder sb = new StringBuilder();
+           for(String item:array){
+               if(array.length > 0){
+               sb.append(",");
+               }
+               sb.append("'").append(item).append("'");
+           }
+           return sb.toString();
+    }
 }
